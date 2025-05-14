@@ -1,0 +1,18 @@
+# Bỏ qua môi trường ảo
+.venv/
+
+# Bỏ qua thư mục kết quả
+results/
+
+# Bỏ qua toàn bộ dataset (ảnh, dữ liệu gốc)
+src/data/train/
+src/data/test/
+src/data/validation/
+src/data/__pycache__/
+
+# Nếu có thư mục data ở ngoài src (dự phòng)
+data/
+
+# Không bỏ qua các file code Python trong src/data
+!src/data/*.py
+!src/data/__init__.py
