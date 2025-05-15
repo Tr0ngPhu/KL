@@ -1,5 +1,5 @@
 # Bỏ qua môi trường ảo
-.venv/
+venv/
 
 # Bỏ qua thư mục kết quả
 results/
@@ -8,11 +8,11 @@ results/
 src/data/train/
 src/data/test/
 src/data/validation/
-src/data/__pycache__/
 
 # Nếu có thư mục data ở ngoài src (dự phòng)
 data/
-
+# Bỏ qua các logs
+logs/
 # Không bỏ qua các file code Python trong src/data
-!src/data/*.py
-!src/data/__init__.py
+!data/*.py
+!data/__init__.py

@@ -8,7 +8,7 @@ class VisionTransformer(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.pos_embed = nn.Parameter(torch.randn(1, (image_size//patch_size)**2 + 1, dim))
         self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(dim, heads, mlp_dim),
+            nn.TransformerEncoderLayer(dim, heads, mlp_dim, batch_first=True),
             depth
         )
         self.mlp_head = nn.Linear(dim, num_classes)

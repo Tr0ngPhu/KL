@@ -7,22 +7,23 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split, WeightedRandomSampler
 from torchvision import transforms
-from PIL import Image
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from datetime import datetime
 import logging
 import yaml
-
+import signal   
+import psutil
 # Thêm đường dẫn gốc vào sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
+sys.path.insert(0, project_root)
 
-from models.model import VisionTransformer
+from model import VisionTransformer
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
-from utils.utils import ensure_dir, check_admin_access, setup_logging, save_checkpoint
+from utils import ensure_dir, check_admin_access, setup_logging, save_checkpoint
 from data.dataset import CustomDataset
 
 # Thiết lập logging
@@ -36,60 +37,29 @@ logging.basicConfig(
     ]
 )
 
-class ProductDataset(Dataset):
-    def __init__(self, data_dir, transform=None):
-        self.data_dir = data_dir
-        self.transform = transform or transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(10),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-        self.images = []
-        self.labels = []
-        self.class_names = ['Giả', 'Thật']
-        
-        # Đọc ảnh từ thư mục train
-        train_dir = os.path.join(data_dir, 'train')
-        real_dir = os.path.join(train_dir, 'real')
-        fake_dir = os.path.join(train_dir, 'fake')
-        
-        # Đọc ảnh thật
-        if os.path.exists(real_dir):
-            for img_name in os.listdir(real_dir):
-                if img_name.endswith(('.png', '.jpg', '.jpeg')):
-                    self.images.append(os.path.join(real_dir, img_name))
-                    self.labels.append(1)  # 1 cho hàng thật
-        
-        # Đọc ảnh giả
-        if os.path.exists(fake_dir):
-            for img_name in os.listdir(fake_dir):
-                if img_name.endswith(('.png', '.jpg', '.jpeg')):
-                    self.images.append(os.path.join(fake_dir, img_name))
-                    self.labels.append(0)  # 0 cho hàng giả
-        
-        logging.info(f'Tổng số ảnh: {len(self.images)}')
-        logging.info(f'Số ảnh thật: {sum(self.labels)}')
-        logging.info(f'Số ảnh giả: {len(self.labels) - sum(self.labels)}')
+def setup_interrupt_handlers(model, results_dir):
+    def handle_interrupt(signum, frame):
+        print("\nNhận tín hiệu dừng, đang lưu model...")
+        torch.save({
+            'model_state_dict': model.state_dict(),
+            'interrupted': True
+        }, os.path.join(results_dir, 'interrupted_model.pth'))
+        sys.exit(0)
     
-    def __len__(self):
-        return len(self.images)
-    
-    def __getitem__(self, idx):
-        img_path = self.images[idx]
-        try:
-            image = Image.open(img_path).convert('RGB')
-            label = self.labels[idx]
-            
-            if self.transform:
-                image = self.transform(image)
-            
-            return image, label
-        except Exception as e:
-            logging.error(f'Lỗi khi đọc ảnh {img_path}: {str(e)}')
-            return None
+    signal.signal(signal.SIGINT, handle_interrupt)
+    signal.signal(signal.SIGTERM, handle_interrupt)
+
+
+def log_system_stats():
+    mem = psutil.virtual_memory()
+    stats = {
+        'cpu_usage': psutil.cpu_percent(),
+        'memory_used_GB': mem.used / (1024**3),
+        'memory_available_GB': mem.available / (1024**3)
+    }
+    logging.info(f"System Stats - CPU: {stats['cpu_usage']}% | "
+                f"Mem Used: {stats['memory_used_GB']:.2f}GB | "
+                f"Available: {stats['memory_available_GB']:.2f}GB")
 
 class EarlyStopping:
     def __init__(self, patience=10, min_delta=0.001, mode='min', verbose=True):
@@ -184,6 +154,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
     results_dir = os.path.join('results', timestamp)
     os.makedirs(results_dir, exist_ok=True)
     
+    setup_interrupt_handlers(model, results_dir)
+
     # Khởi tạo các biến theo dõi
     best_val_acc = 0.0
     train_losses = []
@@ -194,6 +166,12 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
     
     # Huấn luyện
     for epoch in range(num_epochs):
+        # Log thông tin hệ thống
+        log_system_stats()
+        # Giải phóng bộ nhớ GPU
+        if device.type == 'mps':
+            torch.mps.empty_cache()
+
         # Chế độ huấn luyện
         model.train()
         train_loss = 0.0
@@ -248,7 +226,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         with torch.no_grad():
             val_bar = tqdm(val_loader, desc=f'Epoch {epoch+1}/{num_epochs} [Val]')
             for inputs, labels in val_bar:
-                inputs, labels = inputs.to(device), labels.to(device)
+                inputs, labels = inputs.to(device,non_blocking=True), labels.to(device,non_blocking=True)
                 
                 # Forward pass
                 outputs = model(inputs)
@@ -316,25 +294,59 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
     
     return model, best_val_acc
 
-def get_weighted_sampler(labels):
-    """Tạo weighted sampler để xử lý mất cân bằng dữ liệu"""
+def get_weighted_sampler(labels, beta=0.999):
+    """Tạo weighted sampler với class balancing mạnh hơn
+    
+    Args:
+        labels: Mảng numpy chứa nhãn (0=real, 1=fake)
+        beta: Hyperparameter điều chỉnh độ mạnh của balancing (0.9-0.999)
+    """
     class_counts = np.bincount(labels)
-    class_weights = 1. / class_counts
+    
+    # Effective number of samples (thay vì nghịch đảo đơn thuần)
+    effective_num = 1.0 - np.power(beta, class_counts)
+    class_weights = (1.0 - beta) / (effective_num + 1e-6)  # Tránh chia 0
+    
+    # Chuẩn hóa weights
+    class_weights = class_weights / class_weights.sum() * len(class_counts)
+    
     weights = class_weights[labels]
-    return WeightedRandomSampler(weights, len(weights))
+    return WeightedRandomSampler(weights, len(weights), replacement=True)
 
 def load_config():
     config_path = os.path.join(os.path.dirname(current_dir), 'config', 'config.yaml')
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
 
+def get_device():
+    if torch.backends.mps.is_available():
+        try:
+            torch.mps.set_per_process_memory_fraction(0.75),# Giới hạn 90% bộ nhớ
+            torch.mps.empty_cache()  # Giải phóng bộ nhớ  
+            return torch.device("mps")
+        except Exception as e:
+            logging.warning(f"Không thể thiết lập bộ nhớ MPS: {str(e)}")
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        return torch.device("cuda")
+    else:
+        return torch.device("cpu")
+    
+
+
 def main():
     # Load config
     config = load_config()
     
     # Kiểm tra GPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    logging.info(f'Using device: {device}')
+    try:
+        device = get_device()
+        logging.info(f'Using device: {device}')
+    except Exception as e:
+        logging.error(f"Device initialization failed: {e}")
+        device = torch.device("cpu")
+        logging.info("Falling back to CPU")
+
     
     # Tạo transforms
     train_transform = transforms.Compose([
@@ -353,34 +365,37 @@ def main():
     ])
     
     # Tạo dataset và dataloader
+
     train_dataset = CustomDataset(
-        data_dir=os.path.join(current_dir, 'data', 'train'),
+        data_dir=os.path.join(project_root, 'data/dataset', 'train'),
         transform=train_transform
     )
     
     val_dataset = CustomDataset(
-        data_dir=os.path.join(current_dir, 'data', 'validation'),
+        data_dir=os.path.join(project_root, 'data/dataset', 'validation'),
         transform=val_transform
     )
     
     # Tạo weighted sampler cho tập train
-    train_sampler = get_weighted_sampler(train_dataset.labels)
+    train_sampler = get_weighted_sampler(train_dataset.labels, beta=0.999)
     
     # Tạo dataloaders
     train_loader = DataLoader(
         train_dataset,
         batch_size=config['training']['batch_size'],
         sampler=train_sampler,
-        num_workers=config['training']['num_workers'],
-        pin_memory=True
+        num_workers = 2 if device.type == 'mps' else 4 , # Mac thường gặp lỗi với num_workers > 0,
+        persistent_workers=True,
+        pin_memory=(device.type == 'cuda'),  # Chỉ bật cho CUDA
+        prefetch_factor=2  # NEW
     )
     
     val_loader = DataLoader(
         val_dataset,
         batch_size=config['training']['batch_size'],
         shuffle=False,
-        num_workers=config['training']['num_workers'],
-        pin_memory=True
+        num_workers = 2 if device.type == 'mps' else 4 , # Mac thường gặp lỗi với num_workers > 0,
+        pin_memory=(device.type == 'cuda')  # Chỉ bật cho CUDA
     )
     
     # Khởi tạo model
@@ -398,11 +413,15 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(
         model.parameters(),
-        lr=config['training']['learning_rate'],
+        lr=1e-5,
         weight_decay=config['training']['weight_decay']
     )
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.1, patience=5
+    # Scheduler
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer,
+        T_0=10,  # Số epoch mỗi chu kỳ
+        T_mult=1,
+        eta_min=1e-6  # LR tối thiểu
     )
     
     # Huấn luyện model
