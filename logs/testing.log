@@ -1,0 +1,57 @@
+2025-05-15 22:00:11,445 - INFO - Sử dụng device: cpu
+2025-05-15 22:00:11,490 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:00:11,503 - ERROR - Lỗi khi tải model: [Errno 2] No such file or directory: './src/results/20250515_084134/best_model.pth'
+2025-05-15 22:04:48,847 - INFO - Sử dụng device: cpu
+2025-05-15 22:04:48,893 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:04:49,033 - INFO - Đã tải model thành công
+2025-05-15 22:06:48,043 - INFO - Sử dụng device: mps
+2025-05-15 22:06:48,087 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:06:48,203 - INFO - Đã tải model thành công
+2025-05-15 22:07:39,718 - INFO - Đã lưu kết quả test vào file: /Users/daidat/Documents/workspace/KL/logs/test_results_mps.txt
+2025-05-15 22:17:12,590 - INFO - Sử dụng device: cpu
+2025-05-15 22:17:12,636 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:17:12,650 - ERROR - Lỗi khi tải model: [Errno 2] No such file or directory: './src/results/20250515_084134/best_model.pth'
+2025-05-15 22:18:16,875 - INFO - Sử dụng device: cpu
+2025-05-15 22:18:16,922 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:18:17,053 - INFO - Đã tải model thành công
+2025-05-15 22:18:17,053 - ERROR - Lỗi khi đọc ảnh ../data/: [Errno 21] Is a directory: '../data/'
+2025-05-15 22:20:29,971 - INFO - Sử dụng device: mps
+2025-05-15 22:20:30,018 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:20:30,138 - INFO - Đã tải model thành công
+2025-05-15 22:20:30,138 - ERROR - Không tìm thấy ảnh: ../data/dataset/product_7b9b9168.jpg
+2025-05-15 22:24:31,282 - INFO - Sử dụng device: mps
+2025-05-15 22:24:31,328 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:24:31,442 - INFO - Đã tải model thành công
+2025-05-15 22:25:59,860 - INFO - Sử dụng device: mps
+2025-05-15 22:25:59,909 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:26:00,024 - INFO - Đã tải model thành công
+2025-05-15 22:31:33,566 - INFO - Sử dụng device: mps
+2025-05-15 22:31:33,611 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:31:33,733 - INFO - Đã tải model thành công
+2025-05-15 22:33:31,651 - INFO - Sử dụng device: mps
+2025-05-15 22:33:31,696 - INFO - Đã tải cấu hình thành công
+2025-05-15 22:33:31,815 - INFO - Đã tải model thành công
+2025-05-15 23:00:25,298 - INFO - Đang sử dụng thiết bị: mps
+2025-05-15 23:00:25,298 - ERROR - Lỗi khi tải file cấu hình: [Errno 2] No such file or directory: 'config/config.yaml'
+2025-05-15 23:00:25,298 - ERROR - Không thể khởi tạo do lỗi cấu hình: [Errno 2] No such file or directory: 'config/config.yaml'
+2025-05-15 23:02:09,143 - INFO - Đang sử dụng thiết bị: mps
+2025-05-15 23:02:09,147 - INFO - Đã tải cấu hình từ ../config/config.yaml
+2025-05-15 23:02:09,257 - INFO - Đã tải mô hình thành công
+2025-05-15 23:02:09,257 - INFO - Bắt đầu đánh giá mô hình...
+2025-05-15 23:02:09,257 - ERROR - Thư mục test không tồn tại: ../data/dataset/tests/
+2025-05-15 23:02:53,361 - INFO - Đang sử dụng thiết bị: mps
+2025-05-15 23:02:53,365 - INFO - Đã tải cấu hình từ ../config/config.yaml
+2025-05-15 23:02:53,489 - INFO - Đã tải mô hình thành công
+2025-05-15 23:02:53,489 - INFO - Bắt đầu đánh giá mô hình...
+2025-05-15 23:06:08,637 - INFO - Đang sử dụng thiết bị: mps
+2025-05-15 23:06:08,641 - INFO - Đã tải cấu hình từ ../config/config.yaml
+2025-05-15 23:06:08,760 - INFO - Đã tải mô hình thành công
+2025-05-15 23:06:08,760 - INFO - Bắt đầu đánh giá mô hình...
+2025-05-15 23:06:08,760 - ERROR - Thư mục test không tồn tại: ../data/dataset/tests/
+2025-05-15 23:06:17,482 - INFO - Đang sử dụng thiết bị: mps
+2025-05-15 23:06:17,486 - INFO - Đã tải cấu hình từ ../config/config.yaml
+2025-05-15 23:06:17,601 - INFO - Đã tải mô hình thành công
+2025-05-15 23:06:17,602 - INFO - Bắt đầu đánh giá mô hình...
+2025-05-15 23:06:57,218 - INFO - Đã lưu kết quả chi tiết vào results/evaluation_results.csv
+2025-05-15 23:06:57,219 - INFO - Đã lưu metrics vào results/evaluation_metrics.csv
+2025-05-15 23:06:57,221 - INFO - Đã lưu danh sách ảnh dự đoán sai vào results/wrong_predictions.csv

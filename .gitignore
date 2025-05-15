@@ -8,7 +8,6 @@ results/
 src/data/train/
 src/data/test/
 src/data/validation/
-src/data/__pycache__/
 
 # Nếu có thư mục data ở ngoài src (dự phòng)
 data/

@@ -506,3 +506,492 @@ Epoch 30/30:
 2025-05-14 00:32:35,816 - INFO - Using device: cpu
 2025-05-14 00:34:59,317 - INFO - Using device: cpu
 2025-05-14 12:38:11,886 - INFO - Using device: cpu
+2025-05-14 15:13:18,601 - INFO - Using device: mps
+2025-05-14 15:13:18,601 - WARNING - Không tìm thấy ảnh trong thư mục /Users/daidat/Documents/workspace/KL/src/data/train
+2025-05-14 15:13:18,601 - WARNING - Không tìm thấy ảnh trong thư mục /Users/daidat/Documents/workspace/KL/src/data/validation
+2025-05-14 15:14:16,114 - INFO - Using device: mps
+2025-05-14 15:14:16,366 - INFO - Tổng số ảnh: 42312
+2025-05-14 15:14:16,366 - INFO - Số ảnh thật: 35172
+2025-05-14 15:14:16,366 - INFO - Số ảnh giả: 7140
+2025-05-14 15:14:16,391 - INFO - Tổng số ảnh: 5289
+2025-05-14 15:14:16,391 - INFO - Số ảnh thật: 4397
+2025-05-14 15:14:16,391 - INFO - Số ảnh giả: 892
+2025-05-14 16:18:42,494 - INFO - Using device: mps
+2025-05-14 16:18:42,544 - INFO - Tổng số ảnh: 42312
+2025-05-14 16:18:42,544 - INFO - Số ảnh thật: 35172
+2025-05-14 16:18:42,544 - INFO - Số ảnh giả: 7140
+2025-05-14 16:18:42,550 - INFO - Tổng số ảnh: 5289
+2025-05-14 16:18:42,550 - INFO - Số ảnh thật: 4397
+2025-05-14 16:18:42,550 - INFO - Số ảnh giả: 892
+2025-05-14 16:23:43,031 - INFO - Using device: mps
+2025-05-14 16:23:43,031 - INFO - Tổng số ảnh: 58
+2025-05-14 16:23:43,031 - INFO - Số ảnh thật: 37
+2025-05-14 16:23:43,031 - INFO - Số ảnh giả: 21
+2025-05-14 16:23:43,032 - INFO - Tổng số ảnh: 105
+2025-05-14 16:23:43,032 - INFO - Số ảnh thật: 69
+2025-05-14 16:23:43,032 - INFO - Số ảnh giả: 36
+2025-05-14 16:23:57,588 - INFO - Epoch 1/50:
+2025-05-14 16:23:57,589 - INFO - Train Loss: 2.5602, Train Acc: 51.72%
+2025-05-14 16:23:57,589 - INFO - Val Loss: 0.6699, Val Acc: 65.71%
+2025-05-14 16:23:59,682 - INFO - Model tốt nhất được lưu với accuracy: 65.71%
+2025-05-14 16:24:10,967 - INFO - Epoch 2/50:
+2025-05-14 16:24:10,968 - INFO - Train Loss: 0.8416, Train Acc: 39.66%
+2025-05-14 16:24:10,968 - INFO - Val Loss: 0.7866, Val Acc: 65.71%
+2025-05-14 16:24:10,968 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-14 16:24:22,294 - INFO - Epoch 3/50:
+2025-05-14 16:24:22,294 - INFO - Train Loss: 0.8186, Train Acc: 39.66%
+2025-05-14 16:24:22,294 - INFO - Val Loss: 0.7096, Val Acc: 34.29%
+2025-05-14 16:24:22,294 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-14 16:24:33,616 - INFO - Epoch 4/50:
+2025-05-14 16:24:33,616 - INFO - Train Loss: 0.7515, Train Acc: 56.90%
+2025-05-14 16:24:33,616 - INFO - Val Loss: 0.6687, Val Acc: 65.71%
+2025-05-14 16:24:33,616 - INFO - EarlyStopping counter: 3 out of 15
+2025-05-14 16:24:44,916 - INFO - Epoch 5/50:
+2025-05-14 16:24:44,916 - INFO - Train Loss: 0.6804, Train Acc: 55.17%
+2025-05-14 16:24:44,916 - INFO - Val Loss: 0.6867, Val Acc: 65.71%
+2025-05-14 16:24:44,916 - INFO - EarlyStopping counter: 4 out of 15
+2025-05-14 16:24:56,226 - INFO - Epoch 6/50:
+2025-05-14 16:24:56,228 - INFO - Train Loss: 0.8166, Train Acc: 48.28%
+2025-05-14 16:24:56,228 - INFO - Val Loss: 0.8365, Val Acc: 34.29%
+2025-05-14 16:24:56,228 - INFO - EarlyStopping counter: 5 out of 15
+2025-05-14 16:25:07,663 - INFO - Epoch 7/50:
+2025-05-14 16:25:07,663 - INFO - Train Loss: 0.7358, Train Acc: 41.38%
+2025-05-14 16:25:07,663 - INFO - Val Loss: 0.6908, Val Acc: 65.71%
+2025-05-14 16:25:07,663 - INFO - EarlyStopping counter: 6 out of 15
+2025-05-14 16:25:19,120 - INFO - Epoch 8/50:
+2025-05-14 16:25:19,121 - INFO - Train Loss: 0.7259, Train Acc: 46.55%
+2025-05-14 16:25:19,121 - INFO - Val Loss: 0.7677, Val Acc: 34.29%
+2025-05-14 16:25:19,121 - INFO - EarlyStopping counter: 7 out of 15
+2025-05-14 16:25:30,627 - INFO - Epoch 9/50:
+2025-05-14 16:25:30,627 - INFO - Train Loss: 0.7523, Train Acc: 48.28%
+2025-05-14 16:25:30,628 - INFO - Val Loss: 0.6703, Val Acc: 65.71%
+2025-05-14 16:25:30,628 - INFO - EarlyStopping counter: 8 out of 15
+2025-05-14 16:25:41,948 - INFO - Epoch 10/50:
+2025-05-14 16:25:41,948 - INFO - Train Loss: 0.7344, Train Acc: 53.45%
+2025-05-14 16:25:41,949 - INFO - Val Loss: 0.9384, Val Acc: 34.29%
+2025-05-14 16:25:41,949 - INFO - EarlyStopping counter: 9 out of 15
+2025-05-14 16:25:53,276 - INFO - Epoch 11/50:
+2025-05-14 16:25:53,276 - INFO - Train Loss: 0.7507, Train Acc: 60.34%
+2025-05-14 16:25:53,276 - INFO - Val Loss: 0.9103, Val Acc: 34.29%
+2025-05-14 16:25:53,276 - INFO - EarlyStopping counter: 10 out of 15
+2025-05-14 16:26:04,802 - INFO - Epoch 12/50:
+2025-05-14 16:26:04,802 - INFO - Train Loss: 0.7673, Train Acc: 46.55%
+2025-05-14 16:26:04,802 - INFO - Val Loss: 0.7238, Val Acc: 34.29%
+2025-05-14 16:26:04,802 - INFO - EarlyStopping counter: 11 out of 15
+2025-05-14 16:26:16,421 - INFO - Epoch 13/50:
+2025-05-14 16:26:16,421 - INFO - Train Loss: 0.6803, Train Acc: 60.34%
+2025-05-14 16:26:16,421 - INFO - Val Loss: 0.6924, Val Acc: 65.71%
+2025-05-14 16:26:16,421 - INFO - EarlyStopping counter: 12 out of 15
+2025-05-14 16:26:28,092 - INFO - Epoch 14/50:
+2025-05-14 16:26:28,092 - INFO - Train Loss: 0.6942, Train Acc: 56.90%
+2025-05-14 16:26:28,092 - INFO - Val Loss: 0.7062, Val Acc: 34.29%
+2025-05-14 16:26:28,092 - INFO - EarlyStopping counter: 13 out of 15
+2025-05-14 16:26:39,765 - INFO - Epoch 15/50:
+2025-05-14 16:26:39,767 - INFO - Train Loss: 0.6894, Train Acc: 60.34%
+2025-05-14 16:26:39,767 - INFO - Val Loss: 0.7030, Val Acc: 34.29%
+2025-05-14 16:26:39,767 - INFO - EarlyStopping counter: 14 out of 15
+2025-05-14 16:26:51,598 - INFO - Epoch 16/50:
+2025-05-14 16:26:51,598 - INFO - Train Loss: 0.6853, Train Acc: 62.07%
+2025-05-14 16:26:51,598 - INFO - Val Loss: 0.6964, Val Acc: 34.29%
+2025-05-14 16:26:51,598 - INFO - EarlyStopping counter: 15 out of 15
+2025-05-14 16:26:51,598 - INFO - Early stopping triggered. Best value: 65.7143 at epoch 0
+2025-05-14 16:26:51,598 - INFO - Early stopping triggered
+2025-05-14 16:26:52,522 - INFO - 
+Classification Report:
+              precision    recall  f1-score   support
+
+         Giả       0.34      1.00      0.51        36
+        Thật       0.00      0.00      0.00        69
+
+    accuracy                           0.34       105
+   macro avg       0.17      0.50      0.26       105
+weighted avg       0.12      0.34      0.18       105
+
+2025-05-14 16:26:52,522 - INFO - Training completed. Best validation accuracy: 65.71%
+2025-05-14 16:37:41,093 - INFO - Using device: mps
+2025-05-14 16:37:41,409 - INFO - Tổng số ảnh: 42312
+2025-05-14 16:37:41,410 - INFO - Số ảnh thật: 35172
+2025-05-14 16:37:41,410 - INFO - Số ảnh giả: 7140
+2025-05-14 16:37:41,436 - INFO - Tổng số ảnh: 5289
+2025-05-14 16:37:41,437 - INFO - Số ảnh thật: 4397
+2025-05-14 16:37:41,437 - INFO - Số ảnh giả: 892
+2025-05-15 00:46:31,009 - INFO - Using device: mps
+2025-05-15 00:46:31,010 - WARNING - Không tìm thấy ảnh trong thư mục /Users/daidat/Documents/workspace/KL/src/./data/dataset/train
+2025-05-15 00:46:31,010 - WARNING - Không tìm thấy ảnh trong thư mục /Users/daidat/Documents/workspace/KL/src/./data/dataset/validation
+2025-05-15 00:48:24,737 - INFO - Using device: mps
+2025-05-15 00:48:24,975 - INFO - Tổng số ảnh: 42312
+2025-05-15 00:48:24,975 - INFO - Số ảnh thật: 35172
+2025-05-15 00:48:24,975 - INFO - Số ảnh giả: 7140
+2025-05-15 00:48:24,999 - INFO - Tổng số ảnh: 5289
+2025-05-15 00:48:24,999 - INFO - Số ảnh thật: 4397
+2025-05-15 00:48:24,999 - INFO - Số ảnh giả: 892
+2025-05-15 00:55:06,881 - INFO - Using device: mps
+2025-05-15 00:55:07,159 - INFO - Tổng số ảnh: 42312
+2025-05-15 00:55:07,159 - INFO - Số ảnh thật: 35172
+2025-05-15 00:55:07,160 - INFO - Số ảnh giả: 7140
+2025-05-15 00:55:07,187 - INFO - Tổng số ảnh: 5289
+2025-05-15 00:55:07,187 - INFO - Số ảnh thật: 4397
+2025-05-15 00:55:07,187 - INFO - Số ảnh giả: 892
+2025-05-15 00:59:59,536 - INFO - Using device: mps
+2025-05-15 00:59:59,819 - INFO - Tổng số ảnh: 42312
+2025-05-15 00:59:59,820 - INFO - Số ảnh thật: 35172
+2025-05-15 00:59:59,820 - INFO - Số ảnh giả: 7140
+2025-05-15 00:59:59,847 - INFO - Tổng số ảnh: 5289
+2025-05-15 00:59:59,847 - INFO - Số ảnh thật: 4397
+2025-05-15 00:59:59,847 - INFO - Số ảnh giả: 892
+2025-05-15 01:12:11,101 - INFO - Using device: mps
+2025-05-15 01:12:11,393 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:12:11,393 - INFO - Số ảnh thật: 35172
+2025-05-15 01:12:11,394 - INFO - Số ảnh giả: 7140
+2025-05-15 01:12:11,421 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:12:11,421 - INFO - Số ảnh thật: 4397
+2025-05-15 01:12:11,421 - INFO - Số ảnh giả: 892
+2025-05-15 01:12:44,690 - INFO - Using device: mps
+2025-05-15 01:12:44,744 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:12:44,744 - INFO - Số ảnh thật: 35172
+2025-05-15 01:12:44,744 - INFO - Số ảnh giả: 7140
+2025-05-15 01:12:44,751 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:12:44,751 - INFO - Số ảnh thật: 4397
+2025-05-15 01:12:44,751 - INFO - Số ảnh giả: 892
+2025-05-15 01:13:01,562 - INFO - Using device: mps
+2025-05-15 01:13:01,618 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:13:01,618 - INFO - Số ảnh thật: 35172
+2025-05-15 01:13:01,618 - INFO - Số ảnh giả: 7140
+2025-05-15 01:13:01,625 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:13:01,625 - INFO - Số ảnh thật: 4397
+2025-05-15 01:13:01,625 - INFO - Số ảnh giả: 892
+2025-05-15 01:15:31,569 - INFO - Using device: mps
+2025-05-15 01:15:31,635 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:15:31,635 - INFO - Số ảnh thật: 35172
+2025-05-15 01:15:31,635 - INFO - Số ảnh giả: 7140
+2025-05-15 01:15:31,642 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:15:31,642 - INFO - Số ảnh thật: 4397
+2025-05-15 01:15:31,642 - INFO - Số ảnh giả: 892
+2025-05-15 01:15:57,315 - INFO - Using device: mps
+2025-05-15 01:15:57,364 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:15:57,364 - INFO - Số ảnh thật: 35172
+2025-05-15 01:15:57,364 - INFO - Số ảnh giả: 7140
+2025-05-15 01:15:57,370 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:15:57,370 - INFO - Số ảnh thật: 4397
+2025-05-15 01:15:57,370 - INFO - Số ảnh giả: 892
+2025-05-15 01:16:20,714 - INFO - Using device: mps
+2025-05-15 01:16:20,764 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:16:20,764 - INFO - Số ảnh thật: 35172
+2025-05-15 01:16:20,764 - INFO - Số ảnh giả: 7140
+2025-05-15 01:16:20,771 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:16:20,771 - INFO - Số ảnh thật: 4397
+2025-05-15 01:16:20,771 - INFO - Số ảnh giả: 892
+2025-05-15 01:17:05,574 - INFO - Using device: mps
+2025-05-15 01:17:05,708 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:17:05,708 - INFO - Số ảnh thật: 35172
+2025-05-15 01:17:05,708 - INFO - Số ảnh giả: 7140
+2025-05-15 01:17:05,714 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:17:05,714 - INFO - Số ảnh thật: 4397
+2025-05-15 01:17:05,714 - INFO - Số ảnh giả: 892
+2025-05-15 01:17:31,494 - INFO - Using device: mps
+2025-05-15 01:17:31,544 - INFO - Tổng số ảnh: 42312
+2025-05-15 01:17:31,544 - INFO - Số ảnh thật: 35172
+2025-05-15 01:17:31,544 - INFO - Số ảnh giả: 7140
+2025-05-15 01:17:31,550 - INFO - Tổng số ảnh: 5289
+2025-05-15 01:17:31,550 - INFO - Số ảnh thật: 4397
+2025-05-15 01:17:31,551 - INFO - Số ảnh giả: 892
+2025-05-15 03:05:34,226 - INFO - Epoch 1/50:
+2025-05-15 03:05:34,229 - INFO - Train Loss: 0.7266, Train Acc: 50.06%
+2025-05-15 03:05:34,229 - INFO - Val Loss: 0.7618, Val Acc: 16.87%
+2025-05-15 03:05:37,665 - INFO - Model tốt nhất được lưu với accuracy: 16.87%
+2025-05-15 04:53:25,791 - INFO - Epoch 2/50:
+2025-05-15 04:53:25,794 - INFO - Train Loss: 0.7012, Train Acc: 50.13%
+2025-05-15 04:53:25,794 - INFO - Val Loss: 0.6419, Val Acc: 83.13%
+2025-05-15 04:53:28,377 - INFO - Model tốt nhất được lưu với accuracy: 83.13%
+2025-05-15 06:49:20,580 - INFO - Epoch 3/50:
+2025-05-15 06:49:20,585 - INFO - Train Loss: 0.6967, Train Acc: 49.99%
+2025-05-15 06:49:20,585 - INFO - Val Loss: 0.6821, Val Acc: 83.13%
+2025-05-15 06:49:20,585 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 07:43:37,250 - INFO - Using device: mps
+2025-05-15 07:43:37,300 - INFO - Tổng số ảnh: 42312
+2025-05-15 07:43:37,300 - INFO - Số ảnh thật: 35172
+2025-05-15 07:43:37,300 - INFO - Số ảnh giả: 7140
+2025-05-15 07:43:37,307 - INFO - Tổng số ảnh: 5289
+2025-05-15 07:43:37,307 - INFO - Số ảnh thật: 4397
+2025-05-15 07:43:37,307 - INFO - Số ảnh giả: 892
+2025-05-15 07:43:37,337 - INFO - System Stats - CPU: 51.0% | Mem Used: 4.94GB | Available: 9.07GB
+2025-05-15 07:57:31,780 - INFO - Epoch 1/50:
+2025-05-15 07:57:31,781 - INFO - Train Loss: 0.7015, Train Acc: 50.25%
+2025-05-15 07:57:31,783 - INFO - Val Loss: 0.6554, Val Acc: 83.13%
+2025-05-15 07:57:32,004 - INFO - Model tốt nhất được lưu với accuracy: 83.13%
+2025-05-15 07:57:32,004 - INFO - System Stats - CPU: 32.7% | Mem Used: 7.01GB | Available: 7.10GB
+2025-05-15 08:11:15,630 - INFO - Epoch 2/50:
+2025-05-15 08:11:15,630 - INFO - Train Loss: 0.6961, Train Acc: 49.91%
+2025-05-15 08:11:15,630 - INFO - Val Loss: 0.6020, Val Acc: 83.13%
+2025-05-15 08:11:15,630 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 08:11:15,630 - INFO - System Stats - CPU: 27.7% | Mem Used: 7.64GB | Available: 6.83GB
+
+2025-05-15 08:41:34,745 - INFO - Using device: mps
+2025-05-15 08:41:34,795 - INFO - Tổng số ảnh: 42312
+2025-05-15 08:41:34,795 - INFO - Số ảnh thật: 35172
+2025-05-15 08:41:34,795 - INFO - Số ảnh giả: 7140
+2025-05-15 08:41:34,802 - INFO - Tổng số ảnh: 5289
+2025-05-15 08:41:34,802 - INFO - Số ảnh thật: 4397
+2025-05-15 08:41:34,802 - INFO - Số ảnh giả: 892
+2025-05-15 08:41:34,837 - INFO - System Stats - CPU: 60.6% | Mem Used: 6.91GB | Available: 7.88GB
+2025-05-15 08:53:34,651 - INFO - Epoch 1/50:
+2025-05-15 08:53:34,651 - INFO - Train Loss: 0.3661, Train Acc: 86.31%
+2025-05-15 08:53:34,652 - INFO - Val Loss: 0.3342, Val Acc: 88.18%
+2025-05-15 08:53:34,867 - INFO - Model tốt nhất được lưu với accuracy: 88.18%
+2025-05-15 08:53:34,867 - INFO - System Stats - CPU: 32.6% | Mem Used: 7.79GB | Available: 7.01GB
+2025-05-15 09:05:52,020 - INFO - Epoch 2/50:
+2025-05-15 09:05:52,020 - INFO - Train Loss: 0.3103, Train Acc: 88.57%
+2025-05-15 09:05:52,021 - INFO - Val Loss: 0.3503, Val Acc: 88.50%
+2025-05-15 09:05:52,215 - INFO - Model tốt nhất được lưu với accuracy: 88.50%
+2025-05-15 09:05:52,215 - INFO - System Stats - CPU: 32.4% | Mem Used: 7.83GB | Available: 6.97GB
+2025-05-15 09:18:47,451 - INFO - Epoch 3/50:
+2025-05-15 09:18:47,453 - INFO - Train Loss: 0.2869, Train Acc: 89.40%
+2025-05-15 09:18:47,453 - INFO - Val Loss: 0.2614, Val Acc: 90.49%
+2025-05-15 09:18:47,640 - INFO - Model tốt nhất được lưu với accuracy: 90.49%
+2025-05-15 09:18:47,641 - INFO - System Stats - CPU: 32.4% | Mem Used: 7.02GB | Available: 7.56GB
+2025-05-15 09:32:47,150 - INFO - Epoch 4/50:
+2025-05-15 09:32:47,152 - INFO - Train Loss: 0.2705, Train Acc: 90.08%
+2025-05-15 09:32:47,152 - INFO - Val Loss: 0.3142, Val Acc: 89.60%
+2025-05-15 09:32:47,152 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 09:32:47,153 - INFO - System Stats - CPU: 25.2% | Mem Used: 7.76GB | Available: 6.92GB
+2025-05-15 09:47:41,232 - INFO - Epoch 5/50:
+2025-05-15 09:47:41,234 - INFO - Train Loss: 0.2610, Train Acc: 90.41%
+2025-05-15 09:47:41,234 - INFO - Val Loss: 0.2544, Val Acc: 91.08%
+2025-05-15 09:47:41,423 - INFO - Model tốt nhất được lưu với accuracy: 91.08%
+2025-05-15 09:47:41,423 - INFO - System Stats - CPU: 24.3% | Mem Used: 7.77GB | Available: 6.91GB
+2025-05-15 10:09:54,456 - INFO - Epoch 6/50:
+2025-05-15 10:09:54,459 - INFO - Train Loss: 0.2588, Train Acc: 90.55%
+2025-05-15 10:09:54,459 - INFO - Val Loss: 0.2432, Val Acc: 91.38%
+2025-05-15 10:09:54,616 - INFO - Model tốt nhất được lưu với accuracy: 91.38%
+2025-05-15 10:09:54,616 - INFO - System Stats - CPU: 45.5% | Mem Used: 7.90GB | Available: 6.77GB
+2025-05-15 10:30:24,755 - INFO - Epoch 7/50:
+2025-05-15 10:30:24,757 - INFO - Train Loss: 0.2488, Train Acc: 91.11%
+2025-05-15 10:30:24,757 - INFO - Val Loss: 0.2346, Val Acc: 91.61%
+2025-05-15 10:30:24,916 - INFO - Model tốt nhất được lưu với accuracy: 91.61%
+2025-05-15 10:30:24,917 - INFO - System Stats - CPU: 55.8% | Mem Used: 7.70GB | Available: 6.69GB
+2025-05-15 10:51:03,894 - INFO - Epoch 8/50:
+2025-05-15 10:51:03,896 - INFO - Train Loss: 0.2481, Train Acc: 91.00%
+2025-05-15 10:51:03,896 - INFO - Val Loss: 0.2254, Val Acc: 91.98%
+2025-05-15 10:51:04,102 - INFO - Model tốt nhất được lưu với accuracy: 91.98%
+2025-05-15 10:51:04,102 - INFO - System Stats - CPU: 55.0% | Mem Used: 7.51GB | Available: 6.88GB
+2025-05-15 11:09:07,725 - INFO - Epoch 9/50:
+2025-05-15 11:09:07,727 - INFO - Train Loss: 0.2341, Train Acc: 91.53%
+2025-05-15 11:09:07,727 - INFO - Val Loss: 0.2144, Val Acc: 92.23%
+2025-05-15 11:09:07,940 - INFO - Model tốt nhất được lưu với accuracy: 92.23%
+2025-05-15 11:09:07,941 - INFO - System Stats - CPU: 31.1% | Mem Used: 7.73GB | Available: 6.67GB
+2025-05-15 11:28:48,195 - INFO - Epoch 10/50:
+2025-05-15 11:28:48,197 - INFO - Train Loss: 0.2334, Train Acc: 91.76%
+2025-05-15 11:28:48,197 - INFO - Val Loss: 0.2206, Val Acc: 92.34%
+2025-05-15 11:28:48,337 - INFO - Model tốt nhất được lưu với accuracy: 92.34%
+2025-05-15 11:28:48,337 - INFO - System Stats - CPU: 34.0% | Mem Used: 7.71GB | Available: 6.64GB
+2025-05-15 11:48:56,013 - INFO - Epoch 11/50:
+2025-05-15 11:48:56,015 - INFO - Train Loss: 0.2325, Train Acc: 91.69%
+2025-05-15 11:48:56,015 - INFO - Val Loss: 0.2254, Val Acc: 92.40%
+2025-05-15 11:48:56,155 - INFO - Model tốt nhất được lưu với accuracy: 92.40%
+2025-05-15 11:48:56,155 - INFO - System Stats - CPU: 33.1% | Mem Used: 7.64GB | Available: 6.51GB
+2025-05-15 12:07:02,786 - INFO - Epoch 12/50:
+2025-05-15 12:07:02,787 - INFO - Train Loss: 0.2276, Train Acc: 91.92%
+2025-05-15 12:07:02,788 - INFO - Val Loss: 0.2114, Val Acc: 92.85%
+2025-05-15 12:07:02,992 - INFO - Model tốt nhất được lưu với accuracy: 92.85%
+2025-05-15 12:07:02,992 - INFO - System Stats - CPU: 28.3% | Mem Used: 7.59GB | Available: 6.57GB
+2025-05-15 12:21:15,730 - INFO - Epoch 13/50:
+2025-05-15 12:21:15,732 - INFO - Train Loss: 0.2250, Train Acc: 91.97%
+2025-05-15 12:21:15,733 - INFO - Val Loss: 0.2147, Val Acc: 92.32%
+2025-05-15 12:21:15,733 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 12:21:15,733 - INFO - System Stats - CPU: 20.5% | Mem Used: 7.44GB | Available: 6.76GB
+2025-05-15 12:33:50,094 - INFO - Epoch 14/50:
+2025-05-15 12:33:50,095 - INFO - Train Loss: 0.2194, Train Acc: 92.19%
+2025-05-15 12:33:50,095 - INFO - Val Loss: 0.2280, Val Acc: 92.63%
+2025-05-15 12:33:50,095 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 12:33:50,096 - INFO - System Stats - CPU: 15.1% | Mem Used: 7.42GB | Available: 6.79GB
+2025-05-15 12:46:49,685 - INFO - Epoch 15/50:
+2025-05-15 12:46:49,687 - INFO - Train Loss: 0.2181, Train Acc: 92.33%
+2025-05-15 12:46:49,687 - INFO - Val Loss: 0.2160, Val Acc: 92.82%
+2025-05-15 12:46:49,687 - INFO - EarlyStopping counter: 3 out of 15
+2025-05-15 12:46:49,687 - INFO - System Stats - CPU: 16.7% | Mem Used: 7.20GB | Available: 6.56GB
+2025-05-15 12:59:13,775 - INFO - Epoch 16/50:
+2025-05-15 12:59:13,775 - INFO - Train Loss: 0.2101, Train Acc: 92.77%
+2025-05-15 12:59:13,776 - INFO - Val Loss: 0.2136, Val Acc: 92.99%
+2025-05-15 12:59:13,944 - INFO - Model tốt nhất được lưu với accuracy: 92.99%
+2025-05-15 12:59:13,944 - INFO - System Stats - CPU: 13.8% | Mem Used: 7.22GB | Available: 6.65GB
+2025-05-15 13:11:29,131 - INFO - Epoch 17/50:
+2025-05-15 13:11:29,133 - INFO - Train Loss: 0.2077, Train Acc: 92.76%
+2025-05-15 13:11:29,133 - INFO - Val Loss: 0.2052, Val Acc: 92.82%
+2025-05-15 13:11:29,134 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 13:11:29,134 - INFO - System Stats - CPU: 13.1% | Mem Used: 7.62GB | Available: 6.25GB
+2025-05-15 13:24:03,480 - INFO - Epoch 18/50:
+2025-05-15 13:24:03,481 - INFO - Train Loss: 0.2075, Train Acc: 92.79%
+2025-05-15 13:24:03,481 - INFO - Val Loss: 0.2100, Val Acc: 92.80%
+2025-05-15 13:24:03,481 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 13:24:03,481 - INFO - System Stats - CPU: 20.3% | Mem Used: 7.40GB | Available: 6.37GB
+2025-05-15 13:36:32,343 - INFO - Epoch 19/50:
+2025-05-15 13:36:32,345 - INFO - Train Loss: 0.2126, Train Acc: 92.60%
+2025-05-15 13:36:32,345 - INFO - Val Loss: 0.2109, Val Acc: 92.93%
+2025-05-15 13:36:32,345 - INFO - EarlyStopping counter: 3 out of 15
+2025-05-15 13:36:32,346 - INFO - System Stats - CPU: 16.2% | Mem Used: 7.41GB | Available: 6.32GB
+2025-05-15 13:49:38,636 - INFO - Epoch 20/50:
+2025-05-15 13:49:38,638 - INFO - Train Loss: 0.2042, Train Acc: 92.97%
+2025-05-15 13:49:38,638 - INFO - Val Loss: 0.2222, Val Acc: 92.91%
+2025-05-15 13:49:38,638 - INFO - EarlyStopping counter: 4 out of 15
+2025-05-15 13:49:38,638 - INFO - System Stats - CPU: 16.4% | Mem Used: 6.85GB | Available: 5.36GB
+2025-05-15 14:02:18,205 - INFO - Epoch 21/50:
+2025-05-15 14:02:18,207 - INFO - Train Loss: 0.2088, Train Acc: 92.69%
+2025-05-15 14:02:18,207 - INFO - Val Loss: 0.1920, Val Acc: 93.38%
+2025-05-15 14:02:18,421 - INFO - Model tốt nhất được lưu với accuracy: 93.38%
+2025-05-15 14:02:18,421 - INFO - System Stats - CPU: 12.2% | Mem Used: 6.41GB | Available: 5.97GB
+2025-05-15 14:14:45,528 - INFO - Epoch 22/50:
+2025-05-15 14:14:45,529 - INFO - Train Loss: 0.2030, Train Acc: 93.14%
+2025-05-15 14:14:45,529 - INFO - Val Loss: 0.1898, Val Acc: 93.63%
+2025-05-15 14:14:45,713 - INFO - Model tốt nhất được lưu với accuracy: 93.63%
+2025-05-15 14:14:45,714 - INFO - System Stats - CPU: 13.2% | Mem Used: 6.55GB | Available: 5.85GB
+2025-05-15 14:27:35,682 - INFO - Epoch 23/50:
+2025-05-15 14:27:35,683 - INFO - Train Loss: 0.1989, Train Acc: 93.48%
+2025-05-15 14:27:35,683 - INFO - Val Loss: 0.2188, Val Acc: 93.17%
+2025-05-15 14:27:35,684 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 14:27:35,684 - INFO - System Stats - CPU: 19.9% | Mem Used: 6.92GB | Available: 5.52GB
+2025-05-15 14:40:18,093 - INFO - Epoch 24/50:
+2025-05-15 14:40:18,096 - INFO - Train Loss: 0.1969, Train Acc: 93.42%
+2025-05-15 14:40:18,096 - INFO - Val Loss: 0.1953, Val Acc: 93.67%
+2025-05-15 14:40:18,273 - INFO - Model tốt nhất được lưu với accuracy: 93.67%
+2025-05-15 14:40:18,273 - INFO - System Stats - CPU: 17.0% | Mem Used: 6.73GB | Available: 5.71GB
+2025-05-15 14:53:18,468 - INFO - Epoch 25/50:
+2025-05-15 14:53:18,470 - INFO - Train Loss: 0.1960, Train Acc: 93.42%
+2025-05-15 14:53:18,470 - INFO - Val Loss: 0.2103, Val Acc: 92.93%
+2025-05-15 14:53:18,470 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 14:53:18,470 - INFO - System Stats - CPU: 17.1% | Mem Used: 6.80GB | Available: 5.67GB
+2025-05-15 15:06:19,081 - INFO - Epoch 26/50:
+2025-05-15 15:06:19,082 - INFO - Train Loss: 0.1964, Train Acc: 93.32%
+2025-05-15 15:06:19,082 - INFO - Val Loss: 0.1889, Val Acc: 93.63%
+2025-05-15 15:06:19,082 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 15:06:19,083 - INFO - System Stats - CPU: 23.2% | Mem Used: 6.92GB | Available: 5.53GB
+2025-05-15 15:19:25,969 - INFO - Epoch 27/50:
+2025-05-15 15:19:25,970 - INFO - Train Loss: 0.1976, Train Acc: 93.45%
+2025-05-15 15:19:25,970 - INFO - Val Loss: 0.1818, Val Acc: 94.10%
+2025-05-15 15:19:26,145 - INFO - Model tốt nhất được lưu với accuracy: 94.10%
+2025-05-15 15:19:26,145 - INFO - System Stats - CPU: 22.4% | Mem Used: 6.67GB | Available: 5.57GB
+2025-05-15 15:31:55,795 - INFO - Epoch 28/50:
+2025-05-15 15:31:55,797 - INFO - Train Loss: 0.1920, Train Acc: 93.59%
+2025-05-15 15:31:55,797 - INFO - Val Loss: 0.1903, Val Acc: 93.78%
+2025-05-15 15:31:55,798 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 15:31:55,798 - INFO - System Stats - CPU: 18.4% | Mem Used: 6.89GB | Available: 5.38GB
+2025-05-15 15:44:00,628 - INFO - Epoch 29/50:
+2025-05-15 15:44:00,628 - INFO - Train Loss: 0.1923, Train Acc: 93.48%
+2025-05-15 15:44:00,628 - INFO - Val Loss: 0.1921, Val Acc: 93.67%
+2025-05-15 15:44:00,628 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 15:44:00,629 - INFO - System Stats - CPU: 18.4% | Mem Used: 6.53GB | Available: 5.54GB
+2025-05-15 15:56:30,885 - INFO - Epoch 30/50:
+2025-05-15 15:56:30,887 - INFO - Train Loss: 0.1925, Train Acc: 93.56%
+2025-05-15 15:56:30,888 - INFO - Val Loss: 0.1898, Val Acc: 94.23%
+2025-05-15 15:56:31,088 - INFO - Model tốt nhất được lưu với accuracy: 94.23%
+2025-05-15 15:56:31,088 - INFO - System Stats - CPU: 16.2% | Mem Used: 6.55GB | Available: 5.55GB
+2025-05-15 16:10:43,150 - INFO - Epoch 31/50:
+2025-05-15 16:10:43,151 - INFO - Train Loss: 0.1898, Train Acc: 93.69%
+2025-05-15 16:10:43,151 - INFO - Val Loss: 0.1812, Val Acc: 93.86%
+2025-05-15 16:10:43,151 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 16:10:43,152 - INFO - System Stats - CPU: 18.0% | Mem Used: 6.57GB | Available: 5.51GB
+2025-05-15 16:26:07,844 - INFO - Epoch 32/50:
+2025-05-15 16:26:07,846 - INFO - Train Loss: 0.1841, Train Acc: 93.88%
+2025-05-15 16:26:07,846 - INFO - Val Loss: 0.1956, Val Acc: 94.01%
+2025-05-15 16:26:07,846 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 16:26:07,847 - INFO - System Stats - CPU: 26.4% | Mem Used: 6.51GB | Available: 5.41GB
+2025-05-15 16:42:09,981 - INFO - Epoch 33/50:
+2025-05-15 16:42:09,983 - INFO - Train Loss: 0.1859, Train Acc: 93.84%
+2025-05-15 16:42:09,983 - INFO - Val Loss: 0.1862, Val Acc: 93.99%
+2025-05-15 16:42:09,983 - INFO - EarlyStopping counter: 3 out of 15
+2025-05-15 16:42:09,983 - INFO - System Stats - CPU: 25.7% | Mem Used: 6.45GB | Available: 5.37GB
+2025-05-15 16:58:30,863 - INFO - Epoch 34/50:
+2025-05-15 16:58:30,864 - INFO - Train Loss: 0.1851, Train Acc: 93.90%
+2025-05-15 16:58:30,864 - INFO - Val Loss: 0.1784, Val Acc: 94.20%
+2025-05-15 16:58:30,865 - INFO - EarlyStopping counter: 4 out of 15
+2025-05-15 16:58:30,865 - INFO - System Stats - CPU: 23.2% | Mem Used: 6.36GB | Available: 5.46GB
+2025-05-15 17:14:52,145 - INFO - Epoch 35/50:
+2025-05-15 17:14:52,146 - INFO - Train Loss: 0.1857, Train Acc: 93.90%
+2025-05-15 17:14:52,146 - INFO - Val Loss: 0.1895, Val Acc: 93.97%
+2025-05-15 17:14:52,146 - INFO - EarlyStopping counter: 5 out of 15
+2025-05-15 17:14:52,146 - INFO - System Stats - CPU: 24.7% | Mem Used: 6.44GB | Available: 5.15GB
+2025-05-15 17:31:13,565 - INFO - Epoch 36/50:
+2025-05-15 17:31:13,565 - INFO - Train Loss: 0.1792, Train Acc: 94.18%
+2025-05-15 17:31:13,565 - INFO - Val Loss: 0.1750, Val Acc: 94.29%
+2025-05-15 17:31:13,742 - INFO - Model tốt nhất được lưu với accuracy: 94.29%
+2025-05-15 17:31:13,742 - INFO - System Stats - CPU: 24.8% | Mem Used: 6.23GB | Available: 5.19GB
+2025-05-15 17:47:55,701 - INFO - Epoch 37/50:
+2025-05-15 17:47:55,701 - INFO - Train Loss: 0.1845, Train Acc: 93.93%
+2025-05-15 17:47:55,701 - INFO - Val Loss: 0.1706, Val Acc: 94.14%
+2025-05-15 17:47:55,701 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 17:47:55,702 - INFO - System Stats - CPU: 25.6% | Mem Used: 6.19GB | Available: 5.04GB
+2025-05-15 18:04:12,338 - INFO - Epoch 38/50:
+2025-05-15 18:04:12,340 - INFO - Train Loss: 0.1845, Train Acc: 93.89%
+2025-05-15 18:04:12,340 - INFO - Val Loss: 0.2062, Val Acc: 93.69%
+2025-05-15 18:04:12,340 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 18:04:12,340 - INFO - System Stats - CPU: 25.7% | Mem Used: 5.97GB | Available: 4.98GB
+2025-05-15 18:19:48,800 - INFO - Epoch 39/50:
+2025-05-15 18:19:48,802 - INFO - Train Loss: 0.1764, Train Acc: 94.29%
+2025-05-15 18:19:48,802 - INFO - Val Loss: 0.1895, Val Acc: 94.06%
+2025-05-15 18:19:48,803 - INFO - EarlyStopping counter: 3 out of 15
+2025-05-15 18:19:48,803 - INFO - System Stats - CPU: 25.4% | Mem Used: 5.97GB | Available: 4.94GB
+2025-05-15 18:34:00,919 - INFO - Epoch 40/50:
+2025-05-15 18:34:00,922 - INFO - Train Loss: 0.1808, Train Acc: 94.13%
+2025-05-15 18:34:00,922 - INFO - Val Loss: 0.1772, Val Acc: 94.12%
+2025-05-15 18:34:00,922 - INFO - EarlyStopping counter: 4 out of 15
+2025-05-15 18:34:00,923 - INFO - System Stats - CPU: 19.1% | Mem Used: 5.98GB | Available: 4.92GB
+2025-05-15 18:47:11,839 - INFO - Epoch 41/50:
+2025-05-15 18:47:11,841 - INFO - Train Loss: 0.1788, Train Acc: 94.31%
+2025-05-15 18:47:11,842 - INFO - Val Loss: 0.2170, Val Acc: 93.51%
+2025-05-15 18:47:11,842 - INFO - EarlyStopping counter: 5 out of 15
+2025-05-15 18:47:11,842 - INFO - System Stats - CPU: 14.7% | Mem Used: 6.03GB | Available: 4.80GB
+2025-05-15 19:00:38,411 - INFO - Epoch 42/50:
+2025-05-15 19:00:38,414 - INFO - Train Loss: 0.1755, Train Acc: 94.39%
+2025-05-15 19:00:38,414 - INFO - Val Loss: 0.1940, Val Acc: 93.91%
+2025-05-15 19:00:38,415 - INFO - EarlyStopping counter: 6 out of 15
+2025-05-15 19:00:38,415 - INFO - System Stats - CPU: 26.1% | Mem Used: 5.93GB | Available: 4.77GB
+2025-05-15 19:14:00,243 - INFO - Epoch 43/50:
+2025-05-15 19:14:00,245 - INFO - Train Loss: 0.1726, Train Acc: 94.40%
+2025-05-15 19:14:00,245 - INFO - Val Loss: 0.1865, Val Acc: 94.18%
+2025-05-15 19:14:00,245 - INFO - EarlyStopping counter: 7 out of 15
+2025-05-15 19:14:00,246 - INFO - System Stats - CPU: 19.4% | Mem Used: 5.87GB | Available: 4.67GB
+2025-05-15 19:27:19,497 - INFO - Epoch 44/50:
+2025-05-15 19:27:19,500 - INFO - Train Loss: 0.1750, Train Acc: 94.44%
+2025-05-15 19:27:19,500 - INFO - Val Loss: 0.1742, Val Acc: 94.35%
+2025-05-15 19:27:19,695 - INFO - Model tốt nhất được lưu với accuracy: 94.35%
+2025-05-15 19:27:19,695 - INFO - System Stats - CPU: 13.8% | Mem Used: 5.71GB | Available: 4.81GB
+2025-05-15 19:40:56,465 - INFO - Epoch 45/50:
+2025-05-15 19:40:56,467 - INFO - Train Loss: 0.1701, Train Acc: 94.59%
+2025-05-15 19:40:56,467 - INFO - Val Loss: 0.1822, Val Acc: 93.91%
+2025-05-15 19:40:56,467 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 19:40:56,468 - INFO - System Stats - CPU: 17.7% | Mem Used: 5.73GB | Available: 4.84GB
+2025-05-15 19:55:33,262 - INFO - Epoch 46/50:
+2025-05-15 19:55:33,264 - INFO - Train Loss: 0.1681, Train Acc: 94.72%
+2025-05-15 19:55:33,264 - INFO - Val Loss: 0.1801, Val Acc: 94.40%
+2025-05-15 19:55:33,461 - INFO - Model tốt nhất được lưu với accuracy: 94.40%
+2025-05-15 19:55:33,462 - INFO - System Stats - CPU: 21.2% | Mem Used: 5.62GB | Available: 4.72GB
+2025-05-15 20:10:20,049 - INFO - Epoch 47/50:
+2025-05-15 20:10:20,051 - INFO - Train Loss: 0.1727, Train Acc: 94.51%
+2025-05-15 20:10:20,052 - INFO - Val Loss: 0.1899, Val Acc: 94.04%
+2025-05-15 20:10:20,052 - INFO - EarlyStopping counter: 1 out of 15
+2025-05-15 20:10:20,052 - INFO - System Stats - CPU: 27.4% | Mem Used: 5.71GB | Available: 4.58GB
+2025-05-15 20:25:42,827 - INFO - Epoch 48/50:
+2025-05-15 20:25:42,828 - INFO - Train Loss: 0.1713, Train Acc: 94.52%
+2025-05-15 20:25:42,828 - INFO - Val Loss: 0.1929, Val Acc: 94.23%
+2025-05-15 20:25:42,829 - INFO - EarlyStopping counter: 2 out of 15
+2025-05-15 20:25:42,829 - INFO - System Stats - CPU: 34.9% | Mem Used: 5.19GB | Available: 4.29GB
+2025-05-15 20:40:38,882 - INFO - Epoch 49/50:
+2025-05-15 20:40:38,884 - INFO - Train Loss: 0.1690, Train Acc: 94.54%
+2025-05-15 20:40:38,885 - INFO - Val Loss: 0.1820, Val Acc: 94.33%
+2025-05-15 20:40:38,885 - INFO - EarlyStopping counter: 3 out of 15
+2025-05-15 20:40:38,885 - INFO - System Stats - CPU: 30.9% | Mem Used: 5.23GB | Available: 4.43GB
+2025-05-15 20:55:42,023 - INFO - Epoch 50/50:
+2025-05-15 20:55:42,025 - INFO - Train Loss: 0.1659, Train Acc: 94.82%
+2025-05-15 20:55:42,025 - INFO - Val Loss: 0.1724, Val Acc: 94.67%
+2025-05-15 20:55:42,206 - INFO - Model tốt nhất được lưu với accuracy: 94.67%
+2025-05-15 20:55:42,621 - INFO - 
+Classification Report:
+              precision    recall  f1-score   support
+
+         Giả       0.88      0.79      0.83       892
+        Thật       0.96      0.98      0.97      4397
+
+    accuracy                           0.95      5289
+   macro avg       0.92      0.89      0.90      5289
+weighted avg       0.95      0.95      0.95      5289
+
+2025-05-15 20:55:42,622 - INFO - Training completed. Best validation accuracy: 94.67%
