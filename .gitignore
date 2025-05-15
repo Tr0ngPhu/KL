@@ -14,5 +14,5 @@ data/
 # Bỏ qua các logs
 logs/
 # Không bỏ qua các file code Python trong src/data
-!src/data/*.py
-!src/data/__init__.py
+!data/*.py
+!data/__init__.py
