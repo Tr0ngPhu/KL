@@ -1,5 +1,5 @@
 # Bỏ qua môi trường ảo
-.venv/
+venv/
 
 # Bỏ qua thư mục kết quả
 results/
