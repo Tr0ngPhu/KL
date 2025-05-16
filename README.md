@@ -67,20 +67,40 @@ Cd tests
 bash
 python test.py --model_path path/to/model.pth --test_dir data/test
 
-## Ví dụ: python test.py --model_path ./src/results/20250515_084134/best_model.pth  --test_dir /data/dataset/tests
+## Ví dụ: python test.py --model_path ../src/results/20250515_084134/best_model.pth  --test_dir ../data/dataset/test
 
 ## 2. Chạy benchmark hiệu năng:
 bash
 python test.py --model_path path/to/model.pth --benchmark
 
-## Ví dụ: python test.py --model_path ./src/results/20250515_084134/best_model.pth --benchmark
+## Ví dụ: python test.py --model_path ../src/results/20250515_084134/best_model.pth --benchmark
 
 ## 3. Tuỳ chỉnh thiết bị:
 bash
 python test.py --model_path path/to/model.pth --device ## cuda / mps / cpu
 
-## Ví dụ: python test.py --model_path ./src/results/20250515_084134/best_model.pth --device cuda
+## Ví dụ: python test.py --model_path ../src/results/20250515_084134/best_model.pth --device cuda
 
+```
+
+## Kiểm tra phân biệt trên Api
+
+1.Kiểm tra trên terminal/cmd
+
+```bash
+    cd api
+## Load Model Khởi động api
+
+bash
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+## Kiểm tra hình ảnh
+bash
+curl -X POST http://localhost:8000/predict \
+  -F "file= path-file"
+
+#  Ví dụ: curl -X POST http://localhost:8000/predict \
+#   -F "file=@/Users/daidat/Documents/workspace/KL/data/dataset/test/fake/product_92c2b2ef.jpg"
 ```
 
 ## Tính năng

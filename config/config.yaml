@@ -52,7 +52,7 @@ testing:
 
 # Paths
 paths:
-  checkpoint_dir: models/weights
+  checkpoint_dir: saved_models
   log_dir: logs
   model_dir: "models"
   data_dir: "data"

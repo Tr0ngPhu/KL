@@ -39,4 +39,4 @@ def load_checkpoint(model, path):
     """Load checkpoint của model"""
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint['model_state_dict'])
-    return checkpoint 
+    return model 
