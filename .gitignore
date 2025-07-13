@@ -5,14 +5,12 @@ venv/
 results/
 
 # Bỏ qua toàn bộ dataset (ảnh, dữ liệu gốc)
-src/data/train/
-src/data/test/
-src/data/validation/
-
-# Nếu có thư mục data ở ngoài src (dự phòng)
-data/
+data/dataset/train/
+data/dataset/test/
+data/dataset/validation/
+data/dataset_1/train/
+data/dataset_1/test/
+data/dataset_1/validation/
+data/data
 # Bỏ qua các logs
 logs/
-# Không bỏ qua các file code Python trong src/data
-!data/*.py
-!data/__init__.py

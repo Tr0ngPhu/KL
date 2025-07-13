@@ -1,58 +1,92 @@
+# api.py
 import os
 import sys
 import yaml
 import torch
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 import io
+import numpy as np
+import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
+import logging
 
-# Thêm đường dẫn gốc vào sys.path để có thể import các module tự định nghĩa
-current_dir = os.path.dirname(os.path.abspath(__file__))  # Lấy thư mục hiện tại
-project_root = os.path.dirname(current_dir)  # Lấy thư mục gốc project
-sys.path.insert(0, project_root)  # Thêm vào sys.path để import
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-from src.model import VisionTransformer  # Import model VisionTransformer tự định nghĩa
-from src.utils import load_checkpoint, ensure_dir  # Import các hàm tiện ích
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.insert(0, project_root)
 
-# Khởi tạo ứng dụng FastAPI
+from src.explainable_model import ExplainableVisionTransformer, ExplainabilityAnalyzer
+from src.utils import ensure_dir
+
 app = FastAPI(
-    title="Fake Product Detection API",
-    description="API phát hiện sản phẩm giả sử dụng Vision Transformer"
+    title="API Phát Hiện Sản Phẩm Giả",
+    description="API phát hiện sản phẩm giả sử dụng Explainable Vision Transformer"
 )
 
-# Cấu hình
-UPLOAD_FOLDER = os.path.join(project_root, 'uploads')  # Thư mục lưu file upload
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}  # Các định dạng file cho phép
-IMG_SIZE = (224, 224)  # Kích thước ảnh đầu vào
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Tạo thư mục upload nếu chưa tồn tại
-ensure_dir(UPLOAD_FOLDER)
+UPLOAD_FOLDER = os.path.join(project_root, 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+IMG_SIZE = (224, 224)
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+logger.info(f"Tạo thư mục uploads: {UPLOAD_FOLDER}")
+try:
+    ensure_dir(UPLOAD_FOLDER)
+except Exception as e:
+    logger.error(f"Không thể tạo thư mục {UPLOAD_FOLDER}: {e}")
+    sys.exit(1)
+
+app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
 
 def load_config():
-    """Đọc file config.yaml và trả về dictionary cấu hình"""
     config_path = os.path.join(project_root, 'config', 'config.yaml')
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
+    logger.info(f"Đọc cấu hình từ: {config_path}")
+    try:
+        with open(config_path, 'r') as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        logger.warning("Không tìm thấy config.yaml, sử dụng cấu hình mặc định")
+        return {
+            'model': {
+                'image_size': 224,
+                'patch_size': 16,
+                'num_classes': 2,
+                'dim': 192,
+                'depth': 4,
+                'heads': 6,
+                'mlp_dim': 384
+            },
+            'paths': {
+                'checkpoint_dir': '../saved_models'
+            }
+        }
 
 def get_device():
-    """Xác định thiết bị chạy model (MPS/GPU/CPU)"""
-    if torch.backends.mps.is_available():  # Kiểm tra Apple Silicon
+    if torch.backends.mps.is_available():
         return torch.device("mps")
-    elif torch.cuda.is_available():  # Kiểm tra GPU NVIDIA
+    elif torch.cuda.is_available():
         return torch.device("cuda")
-    else:  # Fallback về CPU
-        return torch.device("cpu")
+    return torch.device("cpu")
 
 def load_model():
-    """Khởi tạo và load weights cho model"""
+    logger.info("Tải mô hình mặc định")
     try:
-        config = load_config()  # Đọc cấu hình
-        device = get_device()  # Xác định thiết bị
-        
-        # Khởi tạo model Vision Transformer
-        model = VisionTransformer(
+        config = load_config()
+        device = get_device()
+        model = ExplainableVisionTransformer(
             image_size=config['model']['image_size'],
             patch_size=config['model']['patch_size'],
             num_classes=config['model']['num_classes'],
@@ -60,113 +94,148 @@ def load_model():
             depth=config['model']['depth'],
             heads=config['model']['heads'],
             mlp_dim=config['model']['mlp_dim']
-        ).to(device)  # Chuyển model sang device tương ứng
-        
-        # Đường dẫn đến file checkpoint
-        checkpoint_path = os.path.join(
-            project_root, 
-            config['paths']['checkpoint_dir'], 
-            'best_model.pth'
-        )
-        
-        # Load weights từ checkpoint
-        model = load_checkpoint(model=model, path=checkpoint_path)
-        model.eval()  # Chuyển model sang chế độ evaluation
+        ).to(device)
+        checkpoint_path = os.path.join(project_root, config['paths']['checkpoint_dir'], 'best_model_4.pth')
+        logger.info(f"Tải checkpoint từ: {checkpoint_path}")
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Checkpoint {checkpoint_path} không tồn tại")
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model.eval()
+        num_patches = (config['model']['image_size'] // config['model']['patch_size']) ** 2
+        logger.info(f"num_patches: {num_patches}, grid_size: {int(np.sqrt(num_patches))}")
         return model
     except Exception as e:
-        print(f"[LỖI] Không thể load model: {e}")
+        logger.error(f"Không thể tải mô hình: {str(e)}")
         raise
 
 def allowed_file(filename):
-    """Kiểm tra định dạng file có hợp lệ không"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def preprocess_image(image, device):
-    """Tiền xử lý ảnh đầu vào cho model"""
+def preprocess_image(image):
     transform = transforms.Compose([
-        transforms.Resize(IMG_SIZE),  # Resize về kích thước chuẩn
-        transforms.ToTensor(),  # Chuyển thành tensor
-        # Chuẩn hóa theo mean và std của ImageNet
+        transforms.Resize(IMG_SIZE),
+        transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    return transform(image).unsqueeze(0).to(device)  # Thêm chiều batch và chuyển sang device
+    return transform(image)
 
-# Khởi tạo model khi chạy ứng dụng
+def save_heatmap(analyzer, image_tensor, original_image, result, save_path):
+    logger.info(f"Lưu heatmap vào: {save_path}")
+    try:
+        heatmap = result['attention_heatmap']
+        logger.debug(f"Heatmap shape: {heatmap.shape}")
+        if not isinstance(heatmap, np.ndarray) or heatmap.ndim != 2:
+            logger.error(f"Heatmap không phải mảng 2D NumPy, type: {type(heatmap)}, shape: {getattr(heatmap, 'shape', 'N/A')}")
+            raise ValueError(f"Heatmap phải là mảng 2D NumPy, nhận được type: {type(heatmap)}, shape: {getattr(heatmap, 'shape', 'N/A')}")
+        
+        if heatmap.shape[0] < 1 or heatmap.shape[1] < 1:
+            logger.error(f"Kích thước heatmap không hợp lệ: {heatmap.shape}")
+            raise ValueError(f"Kích thước heatmap không hợp lệ: {heatmap.shape}")
+        
+        plt.figure(figsize=(6, 6))
+        plt.imshow(original_image)
+        plt.imshow(heatmap, cmap='jet', alpha=0.5)
+        plt.axis('off')
+        plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+        plt.close()
+    except Exception as e:
+        logger.error(f"Không thể lưu heatmap: {str(e)}")
+        raise
+
 try:
     model = load_model()
     device = get_device()
-    print(f"[THÔNG BÁO] Đã load model thành công trên thiết bị: {device}")
+    analyzer = ExplainabilityAnalyzer(model, class_names=['Real', 'Fake'])
+    logger.info(f"Đã tải mô hình thành công trên thiết bị: {device}")
 except Exception as e:
-    print(f"[LỖI NGHIÊM TRỌNG] Không thể khởi tạo model: {e}")
-    sys.exit(1)  # Thoát nếu không load được model
+    logger.error(f"Không thể khởi tạo mô hình: {e}")
+    sys.exit(1)
 
 @app.get("/")
 async def root():
-    """Endpoint kiểm tra hoạt động của API"""
     return {
         "message": "Chào mừng đến với API phát hiện sản phẩm giả",
-        "hướng dẫn": "Gửi POST request đến /predict với file ảnh để nhận dự đoán"
+        "hướng dẫn": "Gửi POST request đến /predict với file ảnh để nhận dự đoán và giải thích"
     }
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    """
-    Endpoint nhận diện sản phẩm thật/giả
-    
-    Parameters:
-    - file: File ảnh cần kiểm tra (JPG/PNG)
-    
-    Returns:
-    - JSON chứa kết quả dự đoán và độ tin cậy
-    """
+    logger.info(f"Nhận yêu cầu /predict với file: {file.filename}")
     if not file.filename or not allowed_file(file.filename):
-        return JSONResponse(
+        logger.error("Định dạng file không hợp lệ")
+        raise HTTPException(
             status_code=400,
-            content={"error": "Định dạng file không hỗ trợ. Vui lòng upload ảnh JPG hoặc PNG."}
+            detail="Định dạng file không được phép. Vui lòng upload ảnh JPG hoặc PNG."
+        )
+    
+    if file.size > MAX_FILE_SIZE:
+        logger.error(f"File quá lớn: {file.size} bytes")
+        raise HTTPException(
+            status_code=400,
+            detail=f"File quá lớn. Kích thước tối đa là {MAX_FILE_SIZE / (1024*1024)}MB."
         )
     
     try:
-        # Đọc nội dung file
         contents = await file.read()
-        
-        # Mở ảnh và chuyển sang RGB (phòng trường hợp ảnh grayscale)
+        logger.info("Đã đọc nội dung file")
         image = Image.open(io.BytesIO(contents)).convert('RGB')
+        image_resized = image.resize(IMG_SIZE)
+        original_image = np.array(image_resized)
+        image_tensor = preprocess_image(image).to(device)
+        logger.info("Đã tiền xử lý ảnh")
         
-        # Tiền xử lý ảnh
-        image_tensor = preprocess_image(image, device)
+        result = analyzer.predict_with_explanation(image_tensor, original_image)
+        logger.info(f"Kết quả từ predict_with_explanation: {result}")
         
-        # Dự đoán
-        with torch.no_grad():  # Tắt tính gradient để tiết kiệm bộ nhớ
-            outputs = model(image_tensor)
-            probabilities = torch.softmax(outputs, dim=1)  # Chuyển sang xác suất
-            prediction = torch.argmax(probabilities, dim=1)  # Lấy class có xác suất cao nhất
-            confidence = probabilities[0][prediction].item()  # Độ tin cậy
+        confidence = float(result['confidence'])
+        prediction = result['prediction']
+        if 0.4 < confidence < 0.9:  # Ngưỡng Suspicious
+            prediction = "Suspicious"
+            logger.info("Dự đoán được chuyển thành Suspicious do độ tin cậy trung bình")
         
-        # Chuyển kết quả thành nhãn
-        predicted_label = 'Thật' if prediction.item() == 1 else 'Giả'
+        heatmap_path = os.path.join(UPLOAD_FOLDER, f"heatmap_{file.filename}.png")
+        save_heatmap(analyzer, image_tensor, original_image, result, heatmap_path)
         
-        # Trả về kết quả
+        risk_factors = []
+        explanation_parts = result['explanation'].split('\n\n')
+        for part in explanation_parts:
+            if 'dấu hiệu' in part.lower():
+                risk_factors = [line[2:] for line in part.split('\n') if line.startswith('-')]
+        
+        logger.info("Trả về kết quả thành công")
         return {
-            "prediction": predicted_label,
-            "confidence": round(confidence * 100, 2),  # Làm tròn 2 chữ số
+            "prediction": prediction,
+            "confidence": round(confidence * 100, 2),
             "probabilities": {
-                "Giả": round(probabilities[0][0].item() * 100, 2),
-                "Thật": round(probabilities[0][1].item() * 100, 2)
-            }
+                "Fake": round(float(result['probabilities'][1]) * 100, 2),
+                "Real": round(float(result['probabilities'][0]) * 100, 2)
+            },
+            "explanation": result['explanation'],
+            "riskFactors": risk_factors,
+            "region_analysis": {
+                "top_regions": [
+                    {
+                        "region_name": region[0],
+                        "mean_intensity": round(float(region[1]['mean_intensity'] * 100), 2),
+                        "coverage": round(float(region[1]['coverage'] * 100), 2)
+                    }
+                    for region in result['region_analysis']['top_regions']
+                ],
+                "focus_distribution": result['region_analysis']['focus_distribution']
+            },
+            "heatmap_path": f"/uploads/heatmap_{file.filename}.png"
         }
     
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Có lỗi xảy ra: {str(e)}"}
-        )
+        logger.error(f"Lỗi trong /predict: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Có lỗi xảy ra: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
-    # Chạy server FastAPI
     uvicorn.run(
-        app, 
-        host="0.0.0.0",  # Lắng nghe tất cả địa chỉ IP
-        port=5000,  # Cổng 5000
-        log_level="info"  # Hiển thị log
+        app,
+        host="0.0.0.0",
+        port=5001,
+        log_level="info"
     )

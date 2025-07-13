@@ -1,29 +1,35 @@
-# Model configuration
+# Model configuration - Giữ nguyên vì đã được tối ưu cho ViT nhẹ
 model:
   image_size: 224
   patch_size: 16
   num_classes: 2
-  dim: 256
-  depth: 6
-  heads: 8
-  mlp_dim: 512
+  dim: 192          # Nhẹ để tránh overfitting
+  depth: 4          # Nhẹ để tăng tốc huấn luyện
+  heads: 6
+  mlp_dim: 384
 
 # Data configuration
 data:
-  train_dir: "data/raw/train"
-  test_dir: "data/raw/test"
+  train_dir: "data/dataset/train"
+  test_dir: "data/dataset/test"
+  validation_dir: "data/dataset/validation"
   transform:
     train:
       - type: "Resize"
         size: [224, 224]
-      - type: "RandomHorizontalFlip"
-        p: 0.5
-      - type: "RandomRotation"
-        degrees: 10
+      - type: "RandomResizedCrop"
+        size: [224, 224]
+        scale: [0.7, 1.0]  # Giữ để tăng đa dạng vùng ảnh
       - type: "ColorJitter"
-        brightness: 0.2
-        contrast: 0.2
-        saturation: 0.2
+        brightness: 0.4   # Giữ để tăng đa dạng màu sắc
+        contrast: 0.4
+        saturation: 0.4
+        hue: 0.2
+      - type: "RandomErasing"
+        p: 0.5
+        scale: [0.02, 0.2]  # Giữ để tăng robustness
+      - type: "RandomGrayscale"
+        p: 0.2           # Giữ để tăng đa dạng
       - type: "ToTensor"
       - type: "Normalize"
         mean: [0.485, 0.456, 0.406]
@@ -35,20 +41,58 @@ data:
       - type: "Normalize"
         mean: [0.485, 0.456, 0.406]
         std: [0.229, 0.224, 0.225]
+    validation:
+      - type: "Resize"
+        size: [224, 224]
+      - type: "ToTensor"
+      - type: "Normalize"
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
 
 # Training configuration
 training:
-  batch_size: 16
-  num_workers: 4
-  learning_rate: 0.001
-  weight_decay: 0.01
-  epochs: 50
+  batch_size: 32           # Giảm từ 64 xuống 32 để ổn định trên ViT
+  num_workers: 2           # Phù hợp với MPS
+  learning_rate: 0.00003   # Giảm từ 0.00005 để học ổn định hơn
+  weight_decay: 0.1
+  epochs: 100              # Giảm từ 150 để tránh overfitting
   save_interval: 5
+  dropout: 0.3
+  label_smoothing: 0.1     # Giữ để cải thiện generalization
+  
+# Early stopping và scheduler
+early_stopping:
+  patience: 15
+  min_delta: 0.001
+  mode: 'max'
 
+scheduler:
+  type: "ReduceLROnPlateau"
+  mode: "max"
+  factor: 0.2
+  patience: 8
+  min_lr: 1e-8
+
+# Class balancing
+class_balancing:
+  use_weighted_sampler: true
+  beta: 0.9999
+  focal_loss:
+    use: true
+    alpha: 0.25
+    gamma: 2.5
+
+visualization:
+  attention:
+    save_freq: 5
+    num_samples: 4
+    patch_size: 16
+    alpha: 0.6
+    
 # Testing configuration
 testing:
-  batch_size: 16
-  num_workers: 4
+  batch_size: 32           # Đồng bộ với training
+  num_workers: 2
 
 # Paths
 paths:
@@ -62,4 +106,4 @@ paths:
 logging:
   level: "INFO"
   format: "%(asctime)s - %(levelname)s - %(message)s"
-  log_interval: 10
+  log_interval: 50
