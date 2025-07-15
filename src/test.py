@@ -1,209 +1,189 @@
 import os
-import sys
 import torch
+import torch.nn.functional as F
+from torch.amp import autocast
 from torchvision import transforms
 from PIL import Image
-import argparse
-import logging
 import yaml
-from torch.utils.data import DataLoader
+import logging
+from datetime import datetime
 
-# Thêm đường dẫn gốc vào sys.path
+# Thiết lập
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
-
-from data.dataset import CustomDataset
 from models.model import VisionTransformer
-from utils.utils import ensure_dir, setup_logging, load_checkpoint
 
-from models.model import load_model, predict_image
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# Thiết lập logging
-os.makedirs('../logs', exist_ok=True)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(os.path.join('../logs', 'testing.log')),
-        logging.StreamHandler()
-    ]
-)
+# Biến toàn cục
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = None
+transform = None
+class_names = ['Giả', 'Thật']
 
 def load_config():
+    """Load cấu hình từ file config.yaml"""
     config_path = os.path.join(os.path.dirname(current_dir), 'config', 'config.yaml')
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
 
-def load_image(image_path):
-    """Load và tiền xử lý ảnh"""
-    try:
-        image = Image.open(image_path).convert('RGB')
-        transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-        image_tensor = transform(image).unsqueeze(0)  # Thêm batch dimension
-        return image_tensor
-    except Exception as e:
-        logging.error(f"Lỗi khi đọc ảnh {image_path}: {str(e)}")
-        return None
+def setup_transforms():
+    """Thiết lập transforms cho test"""
+    return transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
 
-def predict_single_image(model, image_path, device='cuda'):
-    """Dự đoán một ảnh"""
-    # Load và tiền xử lý ảnh
-    image_tensor = load_image(image_path)
-    if image_tensor is None:
+def find_latest_checkpoint():
+    """Tìm checkpoint mới nhất"""
+    results_dir = os.path.join(os.path.dirname(current_dir), 'results')
+    if not os.path.exists(results_dir):
         return None
     
-    # Chuyển ảnh lên device
-    image_tensor = image_tensor.to(device)
+    timestamp_dirs = []
+    for item in os.listdir(results_dir):
+        item_path = os.path.join(results_dir, item)
+        if os.path.isdir(item_path):
+            model_file = os.path.join(item_path, 'best_model.pth')
+            if os.path.exists(model_file):
+                timestamp_dirs.append((item, model_file))
     
-    # Dự đoán
-    model.eval()
-    with torch.no_grad():
-        outputs = model(image_tensor)
-        probabilities = torch.softmax(outputs, dim=1)
-        prediction = torch.argmax(probabilities, dim=1)
-        confidence = probabilities[0][prediction].item()
-        
-    # Xác định nhãn thật từ đường dẫn
-    true_label = 'Thật' if 'real' in image_path else 'Giả'
-    predicted_label = 'Thật' if prediction.item() == 1 else 'Giả'
-    is_correct = true_label == predicted_label
-        
-    # Chuyển đổi kết quả
-    result = {
-        'true_label': true_label,
-        'prediction': predicted_label,
-        'is_correct': is_correct,
-        'confidence': confidence * 100,
-        'probabilities': {
-            'Giả': probabilities[0][0].item() * 100,
-            'Thật': probabilities[0][1].item() * 100
-        }
-    }
+    if not timestamp_dirs:
+        return None
     
-    return result
+    timestamp_dirs.sort(key=lambda x: x[0], reverse=True)
+    return timestamp_dirs[0][1]
 
-def test_directory(model, test_dir, device='cuda'):
-    """Kiểm tra toàn bộ thư mục test"""
-    results = []
-    total = 0
-    correct = 0
+def load_model():
+    """Load model đã train từ checkpoint"""
+    global model, transform
     
-    # Duyệt qua các thư mục con (real/fake)
-    for label in ['real', 'fake']:
-        label_dir = os.path.join(test_dir, label)
-        if not os.path.exists(label_dir):
-            continue
-            
-        # Duyệt qua các ảnh trong thư mục
-        for img_name in os.listdir(label_dir):
-            if not img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                continue
-                
-            img_path = os.path.join(label_dir, img_name)
-            result = predict_single_image(model, img_path, device)
-            
-            if result is None:
-                continue
-                
-            # Kiểm tra kết quả
-            true_label = 'Thật' if label == 'real' else 'Giả'
-            is_correct = result['prediction'] == true_label
-            
-            results.append({
-                'image': img_name,
-                'true_label': true_label,
-                'predicted_label': result['prediction'],
-                'confidence': result['confidence'],
-                'is_correct': is_correct
-            })
-            
-            total += 1
-            if is_correct:
-                correct += 1
-    
-    # Tính toán độ chính xác
-    accuracy = (correct / total * 100) if total > 0 else 0
-    
-    return {
-        'results': results,
-        'total': total,
-        'correct': correct,
-        'accuracy': accuracy
-    }
-
-def main():
-    parser = argparse.ArgumentParser(description='Kiểm tra mô hình phân loại sản phẩm thật/giả')
-    parser.add_argument('--model_path', type=str, required=True, help='Đường dẫn đến file model đã huấn luyện')
-    parser.add_argument('--test_dir', type=str, default=os.path.join(current_dir, 'data', 'raw', 'test'), help='Thư mục chứa ảnh test')
-    parser.add_argument('--single_image', type=str, help='Đường dẫn đến ảnh cần kiểm tra')
-    args = parser.parse_args()
-    
-    # Kiểm tra GPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    logging.info(f'Sử dụng device: {device}')
-    
-    # Load config
-    config = load_config()
-    
-    # Load model
     try:
+        model_config = load_config()
+        
         model = VisionTransformer(
-            image_size=config['model']['image_size'],
-            patch_size=config['model']['patch_size'],
-            num_classes=config['model']['num_classes'],
-            dim=config['model']['dim'],
-            depth=config['model']['depth'],
-            heads=config['model']['heads'],
-            mlp_dim=config['model']['mlp_dim']
-        ).to(device)
-        
-        checkpoint = load_checkpoint(
-            model=model,
-            path=args.model_path
+            image_size=model_config['model']['image_size'],
+            patch_size=model_config['model']['patch_size'],
+            num_classes=model_config['model']['num_classes'],
+            dim=model_config['model']['dim'],
+            depth=model_config['model']['depth'],
+            heads=model_config['model']['heads'],
+            mlp_dim=model_config['model']['mlp_dim']
         )
-        logging.info('Đã load model thành công')
+        
+        checkpoint_path = find_latest_checkpoint()
+        if checkpoint_path:
+            checkpoint = torch.load(checkpoint_path, map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            logging.info(f'Model được load từ: {checkpoint_path}')
+            logging.info(f'Độ chính xác model: {checkpoint.get("val_acc", "N/A"):.2f}%')
+        else:
+            logging.error('Không tìm thấy checkpoint để test!')
+            return False
+        
+        model.to(device)
+        model.eval()
+        transform = setup_transforms()
+        
+        logging.info('Model đã load thành công!')
+        return True
+        
     except Exception as e:
-        logging.error(f'Lỗi khi load model: {str(e)}')
+        logging.error(f'Lỗi khi load model: {e}')
+        return False
+
+def test_single_image(image_path):
+    """Test một ảnh đơn lẻ"""
+    try:
+        # Load và preprocess ảnh
+        image = Image.open(image_path).convert('RGB')
+        image_tensor = transform(image).unsqueeze(0).to(device)
+        
+        # Dự đoán
+        with torch.no_grad():
+            with autocast('cuda' if torch.cuda.is_available() else 'cpu'):
+                outputs = model(image_tensor)
+                probabilities = F.softmax(outputs, dim=1)
+                confidence, predicted = torch.max(probabilities, 1)
+        
+        predicted_class = predicted.cpu().item()
+        confidence_score = confidence.cpu().item()
+        
+        result = {
+            'image_path': image_path,
+            'is_real': bool(predicted_class == 1),
+            'class': class_names[predicted_class],
+            'confidence': round(confidence_score * 100, 2),
+            'probabilities': {
+                'fake': round(probabilities[0][0].cpu().item() * 100, 2),
+                'real': round(probabilities[0][1].cpu().item() * 100, 2)
+            }
+        }
+        
+        return result
+        
+    except Exception as e:
+        logging.error(f'Lỗi khi test ảnh {image_path}: {e}')
+        return None
+
+def test_folder(test_folder_path):
+    """Test tất cả ảnh trong một folder"""
+    if not os.path.exists(test_folder_path):
+        logging.error(f'Folder không tồn tại: {test_folder_path}')
         return
     
-    # Kiểm tra một ảnh đơn lẻ
-    if args.single_image:
-        if not os.path.exists(args.single_image):
-            logging.error(f'Không tìm thấy ảnh: {args.single_image}')
-            return
-            
-        result = predict_single_image(model, args.single_image, device)
-        if result:
-            print('\nKết quả dự đoán:')
-            print(f'Ảnh: {os.path.basename(args.single_image)}')
-            print(f'Ảnh này là hàng thật/giả: {result["true_label"]}')
-            print(f'Dự đoán: {"Đúng" if result["is_correct"] else "Sai"}')
-            print(f'Độ tin cậy: {result["confidence"]:.2f}%')
-            print('\nXác suất chi tiết:')
-            print(f'Giả: {result["probabilities"]["Giả"]:.2f}%')
-            print(f'Thật: {result["probabilities"]["Thật"]:.2f}%')
+    results = []
+    image_extensions = ['.jpg', '.jpeg', '.png']
     
-    # Kiểm tra toàn bộ thư mục test
-    if os.path.exists(args.test_dir):
-        print('\nKiểm tra toàn bộ thư mục test:')
-        test_results = test_directory(model, args.test_dir, device)
+    for filename in os.listdir(test_folder_path):
+        if any(filename.lower().endswith(ext) for ext in image_extensions):
+            image_path = os.path.join(test_folder_path, filename)
+            result = test_single_image(image_path)
+            if result:
+                results.append(result)
+                logging.info(f'{filename}: {result["class"]} ({result["confidence"]}%)')
+    
+    # Thống kê
+    if results:
+        total = len(results)
+        real_count = sum(1 for r in results if r['is_real'])
+        fake_count = total - real_count
         
-        print(f'\nTổng số ảnh: {test_results["total"]}')
-        print(f'Số ảnh đúng: {test_results["correct"]}')
-        print(f'Độ chính xác: {test_results["accuracy"]:.2f}%')
-        
-        # In chi tiết các ảnh bị dự đoán sai
-        print('\nChi tiết các ảnh bị dự đoán sai:')
-        for result in test_results['results']:
-            if not result['is_correct']:
-                print(f"\nẢnh: {result['image']}")
-                print(f'Ảnh này là hàng thật/giả: {result["true_label"]}')
-                print(f'Dự đoán: Sai')
-                print(f'Độ tin cậy: {result["confidence"]:.2f}%')
+        logging.info(f'\n=== THỐNG KÊ TEST ===')
+        logging.info(f'Tổng số ảnh: {total}')
+        logging.info(f'Dự đoán THẬT: {real_count} ({real_count/total*100:.1f}%)')
+        logging.info(f'Dự đoán GIẢ: {fake_count} ({fake_count/total*100:.1f}%)')
+        logging.info(f'Confidence trung bình: {sum(r["confidence"] for r in results)/total:.2f}%')
+    
+    return results
+
+def main():
+    """Hàm chính để test"""
+    logging.info('=== KHỞI ĐỘNG TEST ===')
+    
+    # Load model
+    if not load_model():
+        logging.error('Không thể load model để test!')
+        return
+    
+    # Test một ảnh đơn lẻ (thay đổi đường dẫn)
+    # single_image_path = "path/to/your/test/image.jpg"
+    # result = test_single_image(single_image_path)
+    # if result:
+    #     print(f"Kết quả: {result}")
+    
+    # Test folder chứa ảnh test
+    test_folder_path = os.path.join(current_dir, 'data', 'test', 'fake')
+    if os.path.exists(test_folder_path):
+        logging.info(f'Testing folder FAKE: {test_folder_path}')
+        test_folder(test_folder_path)
+    
+    test_folder_path = os.path.join(current_dir, 'data', 'test', 'real')
+    if os.path.exists(test_folder_path):
+        logging.info(f'Testing folder REAL: {test_folder_path}')
+        test_folder(test_folder_path)
+    
+    logging.info('=== TEST HOÀN THÀNH ===')
 
 if __name__ == '__main__':
-    main() 
+    main()

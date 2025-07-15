@@ -7,10 +7,16 @@ class VisionTransformer(nn.Module):
         self.patch_embed = nn.Conv2d(3, dim, kernel_size=patch_size, stride=patch_size)
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.pos_embed = nn.Parameter(torch.randn(1, (image_size//patch_size)**2 + 1, dim))
-        self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(dim, heads, mlp_dim),
-            depth
+        
+        # Fix TransformerEncoder với batch_first=True
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=dim, 
+            nhead=heads, 
+            dim_feedforward=mlp_dim,
+            batch_first=True,
+            dropout=0.1
         )
+        self.transformer = nn.TransformerEncoder(encoder_layer, depth)
         self.mlp_head = nn.Linear(dim, num_classes)
 
     def forward(self, x):

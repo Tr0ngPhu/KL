@@ -1,12 +1,12 @@
-# Model configuration
+# Model configuration (tối ưu cho RTX 3050 4GB)
 model:
   image_size: 224
   patch_size: 16
   num_classes: 2
-  dim: 768
-  depth: 12
-  heads: 12
-  mlp_dim: 3072
+  dim: 512        # Giảm từ 768 để tiết kiệm bộ nhớ
+  depth: 8        # Giảm từ 12 để tiết kiệm bộ nhớ
+  heads: 8        # Giảm từ 12 để tiết kiệm bộ nhớ
+  mlp_dim: 2048   # Giảm từ 3072 để tiết kiệm bộ nhớ
 
 # Data configuration
 data:
@@ -36,14 +36,17 @@ data:
         mean: [0.485, 0.456, 0.406]
         std: [0.229, 0.224, 0.225]
 
-# Training configuration
+# Training configuration (tối ưu cho memory)
 training:
-  batch_size: 32
-  num_workers: 4
-  learning_rate: 0.001
+  batch_size: 4       # Giảm batch size để fit vào 4GB VRAM
+  num_workers: 2      # Giảm num_workers để tiết kiệm RAM
+  learning_rate: 0.0001  # Lower learning rate cho gradient accumulation
   weight_decay: 0.01
   epochs: 50
   save_interval: 5
+  use_mixed_precision: true    # Sử dụng mixed precision
+  gradient_accumulation_steps: 8  # Effective batch size = 4 * 8 = 32
+  label_smoothing: 0.1         # Label smoothing để tăng accuracy
 
 # Testing configuration
 testing:
