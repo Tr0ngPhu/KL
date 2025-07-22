@@ -1,8 +1,8 @@
 # Bỏ qua môi trường ảo
 .venv/
 
-# Bỏ qua thư mục kết quả
-results/
+# Cho phép thư mục results được push lên (chứa trained models)
+# results/ - REMOVED to allow pushing trained models
 
 # Bỏ qua toàn bộ dataset (ảnh, dữ liệu gốc)
 src/data/train/
@@ -42,11 +42,8 @@ MANIFEST
 *.log
 logs/
 
-# Bỏ qua file tạm thời
-*.tmp
-*.temp
-uploads/
-temp/
+# Cho phép thư mục uploads được push lên
+# uploads/ - REMOVED to allow pushing demo files
 
 # Bỏ qua file IDE
 .vscode/

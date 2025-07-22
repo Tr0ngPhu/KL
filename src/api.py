@@ -53,14 +53,13 @@ def load_best_model():
             print("⚠️ Results directory not found.")
             return False
 
-        # Find the most recent training folder by sorting alphabetically/numerically
-        all_folders = [d for d in os.listdir(results_dir) if os.path.isdir(os.path.join(results_dir, d))]
-        if not all_folders:
-            print("⚠️ No training results found.")
+
+        # Always use the specified model folder
+        target_folder = '20250722_094611'
+        model_path = os.path.join(results_dir, target_folder, 'best_model.pth')
+        if not os.path.exists(model_path):
+            print(f"⚠️ Specified model folder '{target_folder}' or best_model.pth not found.")
             return False
-            
-        latest_folder = max(all_folders)
-        model_path = os.path.join(results_dir, latest_folder, 'best_model.pth')
 
         if os.path.exists(model_path):
             # Load model architecture from config to ensure consistency
