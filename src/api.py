@@ -1,209 +1,221 @@
+"""
+Clean API for KL Fake Detection with Smart Explainer
+Optimized and simple
+"""
+
 import os
-import torch
-import torch.nn.functional as F
-from torch.amp import autocast
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from PIL import Image
 import io
-import torchvision.transforms as transforms
-import logging
-import yaml
 from datetime import datetime
-import base64
-from pydantic import BaseModel
-from typing import Optional
+import yaml
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import timm
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
+import torchvision.transforms as transforms
+from explainer import ExplainabilityAnalyzer
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 
-# Thiết lập
-current_dir = os.path.dirname(os.path.abspath(__file__))
-from models.model import VisionTransformer
+app = FastAPI(title="KL Fake Detection API", version="5.0")
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app = FastAPI(title="KL Fake Detection API", version="2.0")
-
-# Models
-class Base64ImageRequest(BaseModel):
-    image: str
-    
-class PredictionResponse(BaseModel):
-    success: bool
-    result: Optional[dict] = None
-    error: Optional[str] = None
-
-# Biến toàn cục
+# Global variables
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = None
+analyzer = None
 transform = None
-class_names = ['Giả', 'Thật']
+class_names = ['Fake', 'Real']
 
-logging.info(f'API đang chạy trên: {device}')
-
-def load_config():
-    """Load cấu hình từ file config.yaml"""
-    config_path = os.path.join(os.path.dirname(current_dir), 'config', 'config.yaml')
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-
-def setup_transforms():
-    """Thiết lập transforms cho inference"""
-    return transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-def find_latest_checkpoint():
-    """Tìm checkpoint mới nhất"""
-    results_dir = os.path.join(os.path.dirname(current_dir), 'results')
-    if not os.path.exists(results_dir):
-        return None
-    
-    timestamp_dirs = []
-    for item in os.listdir(results_dir):
-        item_path = os.path.join(results_dir, item)
-        if os.path.isdir(item_path):
-            model_file = os.path.join(item_path, 'best_model.pth')
-            if os.path.exists(model_file):
-                timestamp_dirs.append((item, model_file))
-    
-    if not timestamp_dirs:
-        return None
-    
-    timestamp_dirs.sort(key=lambda x: x[0], reverse=True)
-    return timestamp_dirs[0][1]
-
-def load_model():
-    """Load model đã train từ checkpoint"""
-    global model, transform
+def load_best_model():
+    """Load the best trained model from the latest results folder."""
+    global model, analyzer
     
     try:
-        model_config = load_config()
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        results_dir = os.path.join(os.path.dirname(current_dir), 'results')
         
-        model = VisionTransformer(
-            image_size=model_config['model']['image_size'],
-            patch_size=model_config['model']['patch_size'],
-            num_classes=model_config['model']['num_classes'],
-            dim=model_config['model']['dim'],
-            depth=model_config['model']['depth'],
-            heads=model_config['model']['heads'],
-            mlp_dim=model_config['model']['mlp_dim']
-        )
-        
-        checkpoint_path = find_latest_checkpoint()
-        if checkpoint_path:
-            checkpoint = torch.load(checkpoint_path, map_location=device)
+        if not os.path.exists(results_dir):
+            print("⚠️ Results directory not found.")
+            return False
+
+        # Find the most recent training folder by sorting alphabetically/numerically
+        all_folders = [d for d in os.listdir(results_dir) if os.path.isdir(os.path.join(results_dir, d))]
+        if not all_folders:
+            print("⚠️ No training results found.")
+            return False
+            
+        latest_folder = max(all_folders)
+        model_path = os.path.join(results_dir, latest_folder, 'best_model.pth')
+
+        if os.path.exists(model_path):
+            # Load model architecture from config to ensure consistency
+            config_path = os.path.join(os.path.dirname(current_dir), 'config', 'config.yaml')
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            model_name = config['model'].get('name', 'vit_base_patch16_224')
+            num_classes = config['model']['num_classes']
+
+            # Create model instance without pretrained weights, as we'll load our own
+            model = timm.create_model(model_name, pretrained=False, num_classes=num_classes)
+            
+            # Load the state dictionary from our checkpoint
+            checkpoint = torch.load(model_path, map_location=device)
             model.load_state_dict(checkpoint['model_state_dict'])
-            logging.info(f'Model được load từ: {checkpoint_path}')
-            logging.info(f'Độ chính xác model: {checkpoint.get("val_acc", "N/A"):.2f}%')
+            model.to(device)
+            model.eval()
+            
+            # Initialize the correct analyzer with the loaded model
+            analyzer = ExplainabilityAnalyzer(model, class_names)
+            accuracy = checkpoint.get('accuracy', 'N/A')
+            if isinstance(accuracy, float):
+                print(f"✅ Loaded best model from '{latest_folder}' with accuracy {accuracy:.2%}")
+            else:
+                print(f"✅ Loaded best model from '{latest_folder}' (accuracy not recorded in checkpoint).")
+            return True
         else:
-            logging.warning('Không tìm thấy checkpoint, dùng model chưa train')
-        
-        model.to(device)
-        model.eval()
-        transform = setup_transforms()
-        
-        logging.info('Model đã load thành công!')
-        return True
-        
+            print(f"⚠️ 'best_model.pth' not found in the latest folder '{latest_folder}'.")
+            return False
+
     except Exception as e:
-        logging.error(f'Lỗi khi load model: {e}')
+        print(f"❌ Model loading failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
-def allowed_file(filename):
-    """Kiểm tra định dạng file có hợp lệ không"""
-    allowed_extensions = {'png', 'jpg', 'jpeg'}
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+def fallback_to_pretrained():
+    """If loading local model fails, use a pretrained one as a fallback."""
+    global model, analyzer
+    print("⚠️ Falling back to a generic pretrained model.")
+    model = timm.create_model('vit_base_patch16_224', pretrained=True, num_classes=2)
+    model.to(device)
+    model.eval()
+    analyzer = ExplainabilityAnalyzer(model, class_names)
+    print("✅ Loaded pretrained 'vit_base_patch16_224'.")
 
-def predict_image(image):
-    """Dự đoán ảnh với model"""
-    try:
-        image_tensor = transform(image).unsqueeze(0).to(device)
-        
-        with torch.no_grad():
-            with autocast('cuda' if torch.cuda.is_available() else 'cpu'):
-                outputs = model(image_tensor)
-                probabilities = F.softmax(outputs, dim=1)
-                confidence, predicted = torch.max(probabilities, 1)
-        
-        predicted_class = predicted.cpu().item()
-        confidence_score = confidence.cpu().item()
-        
-        result = {
-            'is_real': bool(predicted_class == 1),
-            'class': class_names[predicted_class],
-            'confidence': round(confidence_score * 100, 2),
-            'probabilities': {
-                'fake': round(probabilities[0][0].cpu().item() * 100, 2),
-                'real': round(probabilities[0][1].cpu().item() * 100, 2)
-            },
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        logging.info(f'Kết quả dự đoán: {result["class"]} ({result["confidence"]}%)')
-        return result
-        
-    except Exception as e:
-        logging.error(f'Lỗi khi dự đoán: {e}')
-        raise
+def setup_transform():
+    """Setup image transforms"""
+    global transform
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 
-# Các routes
-@app.get("/")
+# --- Initialization ---
+setup_transform()
+if not load_best_model():
+    fallback_to_pretrained()
+
+# Serve static files
+current_dir = os.path.dirname(os.path.abspath(__file__))
+web_dir = os.path.join(os.path.dirname(current_dir), "web")
+uploads_dir = os.path.join(os.path.dirname(current_dir), "uploads")
+
+if not os.path.exists(uploads_dir):
+    os.makedirs(uploads_dir)
+
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+app.mount("/static", StaticFiles(directory=web_dir), name="static")
+
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {
-        "message": "KL Fake Detection API",
-        "version": "2.0",
-        "model_loaded": model is not None,
-        "device": str(device)
-    }
+    """Serve the main UI"""
+    try:
+        index_path = os.path.join(web_dir, "index.html")
+        with open(index_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>Error loading UI: {str(e)}</h1>", status_code=500)
 
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "device": str(device),
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.post("/predict", response_model=PredictionResponse)
+@app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    if model is None:
-        raise HTTPException(status_code=500, detail="Model chưa được load")
-    
-    if not allowed_file(file.filename):
-        raise HTTPException(status_code=400, detail="Định dạng file không hợp lệ")
-    
+    """Endpoint to predict and explain an image"""
+    if not model or not analyzer:
+        raise HTTPException(status_code=503, detail="Model not loaded. Please try again later.")
+
     try:
+        # Read image
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents)).convert('RGB')
-        result = predict_image(image)
-        return PredictionResponse(success=True, result=result)
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
         
-    except Exception as e:
-        logging.error(f'Lỗi trong predict endpoint: {e}')
-        raise HTTPException(status_code=500, detail=f'Lỗi xử lý: {str(e)}')
+        # Transform - ensure correct tensor shape [1, 3, 224, 224]
+        img_tensor = transform(image).unsqueeze(0).to(device)
 
-@app.post("/predict/base64", response_model=PredictionResponse)
-async def predict_base64(request: Base64ImageRequest):
-    if model is None:
-        raise HTTPException(status_code=500, detail="Model chưa được load")
-    
-    try:
-        image_data = base64.b64decode(request.image)
-        image = Image.open(io.BytesIO(image_data)).convert('RGB')
-        result = predict_image(image)
-        return PredictionResponse(success=True, result=result)
+        # Get prediction and explanation
+        result = analyzer.predict_with_explanation(img_tensor, np.array(image))
+
+        # Save visualizations
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        heatmap_path = os.path.join(uploads_dir, f'heatmap_{timestamp}.png')
+        analysis_path = os.path.join(uploads_dir, f'analysis_{timestamp}.png')
         
-    except Exception as e:
-        logging.error(f'Lỗi trong predict_base64 endpoint: {e}')
-        raise HTTPException(status_code=500, detail=f'Lỗi xử lý: {str(e)}')
+        # Save heatmap
+        plt.figure(figsize=(8, 8))
+        plt.imshow(result['heatmap'], cmap='viridis')
+        plt.axis('off')
+        plt.title(f"Attention Heatmap - {result['prediction']}")
+        plt.savefig(heatmap_path, bbox_inches='tight', dpi=150)
+        plt.close()
+        
+        # Save full analysis
+        analyzer.visualize_explanation(np.array(image), result, save_path=analysis_path)
+        plt.close('all')  # Close all matplotlib figures to prevent memory leaks
 
-@app.on_event("startup")
-async def startup_event():
-    if not load_model():
-        raise RuntimeError('Không thể load model')
+        # Make paths web-accessible
+        heatmap_url = "/uploads/" + os.path.basename(heatmap_path)
+        analysis_url = "/uploads/" + os.path.basename(analysis_path)
+
+        return JSONResponse({
+            "prediction": result['prediction'],
+            "confidence": round(result['confidence'] * 100, 2),
+            "explanation": {
+                "heatmap": heatmap_url,
+                "analysis_plot": analysis_url,
+                "text": result['explanation']
+            }
+        })
+
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"An error occurred during prediction: {e}")
+
+@app.get("/status")
+def get_status():
+    """Get API status"""
+    return {
+        "status": "running",
+        "model_loaded": model is not None,
+        "analyzer_initialized": analyzer is not None,
+        "device": str(device),
+        "version": "5.0 - Smart Explainer"
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    logging.info('Đang khởi động KL Fake Detection API...')
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    # Load config to get port
+    try:
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'config.yaml')
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        port = config.get('api', {}).get('port', 8000)
+    except Exception:
+        port = 8000
+        
+    uvicorn.run("api:app", host="127.0.0.1", port=port, reload=True)

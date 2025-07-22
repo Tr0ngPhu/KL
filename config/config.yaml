@@ -1,52 +1,67 @@
-# Model configuration (tối ưu cho RTX 3050 4GB)
 model:
   image_size: 224
   patch_size: 16
   num_classes: 2
-  dim: 512        # Giảm từ 768 để tiết kiệm bộ nhớ
-  depth: 8        # Giảm từ 12 để tiết kiệm bộ nhớ
-  heads: 8        # Giảm từ 12 để tiết kiệm bộ nhớ
-  mlp_dim: 2048   # Giảm từ 3072 để tiết kiệm bộ nhớ
+  # Note: These parameters are for fallback custom model only
+  # Pretrained ViT will use its own architecture
+  dim: 512           
+  depth: 6           
+  heads: 8           
+  mlp_dim: 2048      
+  dropout: 0.3       # Increased for better regularization
+  stochastic_depth: 0.05
+  # Enhanced pretrained model settings
+  pretrained_model: 'vit_large_patch16_224'  # Upgraded to Large
+  fallback_model: 'vit_base_patch16_224'     # Fallback option
+  drop_rate: 0.4       # Increased dropout
+  attn_drop_rate: 0.3  # Higher attention dropout
+  drop_path_rate: 0.1  # Added drop path
 
-# Data configuration
-data:
-  train_dir: 'data/raw/train'
-  test_dir: 'data/raw/test'
-  transform:
-    train:
-      - type: 'Resize'
-        size: [224, 224]
-      - type: 'RandomHorizontalFlip'
-        p: 0.5
-      - type: 'RandomRotation'
-        degrees: 10
-      - type: 'ColorJitter'
-        brightness: 0.2
-        contrast: 0.2
-        saturation: 0.2
-      - type: 'ToTensor'
-      - type: 'Normalize'
-        mean: [0.485, 0.456, 0.406]
-        std: [0.229, 0.224, 0.225]
-    test:
-      - type: 'Resize'
-        size: [224, 224]
-      - type: 'ToTensor'
-      - type: 'Normalize'
-        mean: [0.485, 0.456, 0.406]
-        std: [0.229, 0.224, 0.225]
-
-# Training configuration (tối ưu cho memory)
 training:
-  batch_size: 4       # Giảm batch size để fit vào 4GB VRAM
-  num_workers: 2      # Giảm num_workers để tiết kiệm RAM
-  learning_rate: 0.0001  # Lower learning rate cho gradient accumulation
-  weight_decay: 0.01
-  epochs: 50
-  save_interval: 5
-  use_mixed_precision: true    # Sử dụng mixed precision
-  gradient_accumulation_steps: 8  # Effective batch size = 4 * 8 = 32
-  label_smoothing: 0.1         # Label smoothing để tăng accuracy
+  batch_size: 24              # Reduced for larger model
+  num_workers: 4             
+  learning_rate: 0.0002      # Enhanced learning rate
+  classifier_lr: 0.001       # Higher LR for classifier head
+  weight_decay: 0.01         
+  epochs: 50                 # More epochs for better convergence
+  gradient_accumulation_steps: 1  
+  label_smoothing: 0.05      # Reduced for better discrimination
+  confidence_penalty: 0.1    # New: confidence penalty weight
+  use_mixup: true            # Enable mixup
+  use_cutmix: true           # Enable cutmix
+  mixup_alpha: 0.4
+  cutmix_alpha: 1.0
+  mixup_prob: 0.6            # 60% chance of augmentation
+  T_0: 15                    
+  min_lr: 0.0000001          
+  early_stopping_patience: 15  # Increased patience
+  save_interval: 10          
+  use_mixed_precision: true  
+  warmup_epochs: 5           
+  use_tta: true              # Enable Test Time Augmentation
+  tta_frequency: 5           # Apply TTA every 5 epochs
+
+# Data augmentation (optimized for better accuracy)
+data_augmentation:
+  horizontal_flip: 0.5
+  vertical_flip: 0.1         # Added for better augmentation
+  rotation_degrees: 15
+  perspective_distortion: 0.1 # Added perspective transform
+  color_jitter:
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.1
+  random_affine:
+    degrees: 10
+    translate: [0.1, 0.1]
+    scale: [0.9, 1.1]
+  random_erasing:
+    probability: 0.2
+    scale: [0.02, 0.15]
+  random_crop: true
+  crop_size: 224
+  resize_size: 256
 
 # Testing configuration
 testing:

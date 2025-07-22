@@ -37,6 +37,14 @@ def setup_transforms():
 def find_latest_checkpoint():
     """Tìm checkpoint mới nhất"""
     results_dir = os.path.join(os.path.dirname(current_dir), 'results')
+    
+    # Sử dụng checkpoint mới nhất với 90.6% accuracy
+    latest_checkpoint = os.path.join(results_dir, '20250720_053233', 'best_model.pth')
+    if os.path.exists(latest_checkpoint):
+        print(f"✅ Found best checkpoint: 90.6% accuracy")
+        return latest_checkpoint
+    
+    # Fallback: tìm checkpoint mới nhất khác
     if not os.path.exists(results_dir):
         return None
     
