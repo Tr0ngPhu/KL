@@ -2,6 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+def create_model(model_name='efficientnet_b0', num_classes=2, pretrained=False):
+    """
+    Create model function for compatibility with test suite
+    """
+    try:
+        import timm
+        return timm.create_model(model_name, num_classes=num_classes, pretrained=pretrained)
+    except ImportError:
+        # Fallback to custom VisionTransformer if timm not available
+        return VisionTransformer(num_classes=num_classes)
+
 class StochasticDepth(nn.Module):
     """
     Stochastic Depth module.

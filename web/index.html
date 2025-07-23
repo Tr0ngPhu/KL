@@ -1,3 +1,4 @@
+        
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -27,8 +28,14 @@
             --error-gradient: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
             --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            --border-radius: 1rem;
+            --border-radius: 1.25rem;
             --glassmorphism: backdrop-filter: blur(16px) saturate(180%);
+            --base-font-size: 18px;
+            --heading-font-size: 3rem;
+            --subheading-font-size: 2.2rem;
+            --button-font-size: 1.2rem;
+            --input-height: 3.5rem;
+            --button-padding: 1.2rem 2.5rem;
         }
 
         [data-theme="dark"] {
@@ -58,6 +65,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            font-size: var(--base-font-size);
         }
 
         body::before {
@@ -115,7 +123,7 @@
 
         .container {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             text-align: center;
             position: relative;
@@ -124,23 +132,23 @@
             flex-direction: column;
             justify-content: flex-start;
             align-items: center;
-            padding-top: 2rem;
+            padding-top: 3rem;
         }
 
         .main-card {
             background: var(--card-bg);
             border-radius: var(--border-radius);
-            padding: 4rem;
+            padding: 5rem;
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-color);
             backdrop-filter: blur(16px) saturate(180%);
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
             opacity: 1;
             transform: translateY(0);
             position: relative;
             overflow: hidden;
-            max-width: 1000px;
+            max-width: 1200px;
             width: 100%;
         }
 
@@ -171,9 +179,9 @@
         }
 
         .header h1 {
-            font-size: 3.5rem;
+            font-size: 4rem;
             font-weight: 800;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.8rem;
             background: var(--accent-color);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -183,9 +191,9 @@
 
         .header p {
             color: var(--secondary-text);
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 400;
-            opacity: 0.8;
+            opacity: 0.85;
         }
 
         .results-layout {
@@ -257,12 +265,12 @@
         }
 
         .heatmap-large {
-            max-width: 900px;
+            max-width: 1100px;
             width: 100%;
             height: auto;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-lg);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.15);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
@@ -281,18 +289,18 @@
         }
 
         .section-title {
-            font-size: 2rem;
+            font-size: 2.4rem;
             font-weight: 600;
-            margin-bottom: 2rem;
+            margin-bottom: 2.2rem;
             color: var(--primary-text);
         }
 
         .uploaded-image {
             max-width: 100%;
-            max-height: 600px;
+            max-height: 700px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
             object-fit: contain;
         }
 
@@ -345,49 +353,76 @@
         .result-status {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            padding: 2rem;
-            border-radius: 1rem;
-            font-weight: 600;
-            font-size: 1.5rem;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3.5rem;
+            padding: 3.5rem 2.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 700;
+            font-size: 2.6rem; /* Tăng kích thước font */
+            text-align: center;
+            transform: scale(0.9);
+            opacity: 0;
+            animation: bounceIn 0.8s ease-out 0.1s forwards;
+            display: flex;
+            justify-content: center; /* Đảm bảo căn giữa */
+            width: 100%;
         }
 
-        .result-status.real {
-            background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .result-status.authentic {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.15) 0%, rgba(56, 161, 105, 0.15) 100%);
             color: #2f855a;
-            border: 2px solid rgba(72, 187, 120, 0.3);
+            border: 3px solid rgba(72, 187, 120, 0.4);
             position: relative;
             overflow: hidden;
         }
 
-        .result-status.real::before {
+        .result-status.authentic::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(72, 187, 120, 0.1), transparent);
+            background: linear-gradient(90deg, transparent, rgba(72, 187, 120, 0.2), transparent);
             animation: shimmer 2s infinite;
         }
 
-        .result-status.fake {
-            background: linear-gradient(135deg, rgba(245, 101, 101, 0.1) 0%, rgba(229, 62, 62, 0.1) 100%);
+        .result-status.counterfeit {
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.15) 0%, rgba(229, 62, 62, 0.15) 100%);
             color: #c53030;
-            border: 2px solid rgba(245, 101, 101, 0.3);
+            border: 3px solid rgba(245, 101, 101, 0.4);
             position: relative;
             overflow: hidden;
+            font-size: 3rem; /* Thêm kích thước chữ lớn hơn cho "Sản phẩm giả" */
+            font-weight: 800; /* Thêm đậm hơn */
+            text-transform: uppercase; /* Viết hoa tất cả */
+            letter-spacing: 1px; /* Tăng khoảng cách chữ */
         }
 
-        .result-status.fake::before {
+        .result-status.counterfeit::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(245, 101, 101, 0.1), transparent);
+            background: linear-gradient(90deg, transparent, rgba(245, 101, 101, 0.2), transparent);
             animation: shimmer 2s infinite;
         }
 
@@ -397,17 +432,34 @@
         }
 
         .confidence-level {
-            font-size: 1.5rem;
+            font-size: 2.4rem;
             font-weight: 700;
-            margin-bottom: 2rem;
-            padding: 2rem;
+            margin-bottom: 2.5rem;
+            padding: 3.5rem 2.5rem;
             background: linear-gradient(135deg, var(--background) 0%, rgba(255, 255, 255, 0.1) 100%);
-            border-radius: 1rem;
-            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            border: 3px solid var(--border-color);
             text-align: center;
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(8px);
+            transform: scale(0.95);
+            opacity: 0;
+            animation: zoomIn 0.8s ease-out 0.3s forwards;
+        }
+
+        @keyframes zoomIn {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .confidence-level strong {
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 1.2rem;
+            color: var(--primary-text);
         }
 
         .confidence-level::before {
@@ -428,16 +480,33 @@
 
         .analysis-text {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            padding: 2.5rem;
-            border-radius: 1rem;
-            border: 1px solid var(--border-color);
-            line-height: 1.8;
+            padding: 3.5rem;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--border-color);
+            line-height: 2;
             white-space: pre-line;
             color: var(--primary-text);
-            font-size: 1.1rem;
+            font-size: 1.4rem;
+            font-weight: 500;
             backdrop-filter: blur(8px);
             position: relative;
             overflow: hidden;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.02em;
+            animation: fadeInUp 0.6s ease-out 0.8s both;
+            opacity: 0;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .analysis-text::before {
@@ -454,6 +523,44 @@
             margin-top: 2rem;
             text-align: center;
         }
+        
+        .heatmap-container-inline {
+            margin-top: 1.5rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.7s ease-in-out;
+        }
+        
+        .heatmap-container-inline.show {
+            opacity: 1;
+        }
+        
+        .heatmap-image-inline {
+            width: 100%;
+            max-width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            /* background removed for natural heatmap color */
+            /* fallback color for transparency */
+            opacity: 1;
+            position: static;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .heatmap-caption {
+            font-size: 0.9rem;
+            color: var(--primary-text);
+            margin-top: 0.5rem;
+            text-align: center;
+            font-style: italic;
+        }
 
         .heatmap-image {
             max-width: 100%;
@@ -467,18 +574,18 @@
             background: var(--accent-color);
             color: white;
             border: none;
-            padding: 1.5rem 3rem;
+            padding: 1.8rem 3.5rem;
             border-radius: 50px;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
             display: flex;
             align-items: center;
             gap: 1rem;
-            margin: 3rem auto;
-            min-width: 280px;
+            margin: 3.5rem auto;
+            min-width: 320px;
             justify-content: center;
             position: relative;
             overflow: hidden;
@@ -709,7 +816,7 @@
             
             .analysis-text {
                 padding: 1.75rem;
-                font-size: 0.95rem;
+                font-size: 1.4rem;
             }
             
             .result-status {
@@ -765,14 +872,14 @@
         }
 
         #uploadArea {
-            border: 3px dashed var(--border-color);
+            border: 4px dashed var(--border-color);
             border-radius: var(--border-radius);
-            padding: 5rem 4rem;
+            padding: 7rem 5rem;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            min-height: 450px;
+            min-height: 500px;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
             backdrop-filter: blur(8px);
             display: flex;
@@ -831,7 +938,7 @@
         }
 
         .upload-text {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 600;
             background: var(--accent-color);
             -webkit-background-clip: text;
@@ -841,7 +948,7 @@
 
         .upload-subtext {
             color: var(--secondary-text);
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             opacity: 0.8;
         }
 
@@ -956,8 +1063,9 @@
         }
         
         #resultText {
-            font-size: 1.25rem;
+            font-size: 2rem;
             font-weight: 600;
+            margin: center;
         }
 
         .result-details {
@@ -978,6 +1086,98 @@
 
         #confidenceText {
             font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            background: var(--accent-color);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s infinite;
+            display: block;
+            margin-top: 0.5rem;
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(1.05); 
+                opacity: 0.8; 
+            }
+        }
+        
+        .ai-analysis-title {
+            margin-bottom: 1.5rem;
+            color: var(--primary-text);
+            font-size: 2.6rem; /* Tăng kích thước font */
+            font-weight: 800; /* Tăng độ đậm */
+            text-align: center;
+            position: relative;
+            padding: 0.5rem 0 0.75rem;
+            background: none;
+            border-radius: 0;
+            letter-spacing: 0.5px; /* Tăng khoảng cách chữ */
+            text-transform: uppercase; /* Viết hoa */
+            transition: color 0.3s;
+        }
+
+        [data-theme="dark"] .ai-analysis-title {
+            color: #fff;
+        }
+        
+        .ai-analysis-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 2px;
+        }
+        
+        .analysis-text {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        .heatmap-title {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-text);
+        }
+        
+        .heatmap-description {
+            color: var(--secondary-text);
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .detailed-confidence {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--secondary-text);
+            margin-top: 1rem;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .detailed-confidence:hover {
+            opacity: 1;
+        }
+
+        #detailedConfidence {
+            font-weight: 500;
+            color: var(--primary-text);
+            font-size: 1.2rem;
         }
 
         #explanationText {
@@ -994,13 +1194,20 @@
             display: none;
             margin-top: 2rem;
             color: var(--error-color);
-            background: linear-gradient(135deg, rgba(245, 101, 101, 0.1) 0%, rgba(229, 62, 62, 0.1) 100%);
-            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.15) 0%, rgba(229, 62, 62, 0.15) 100%);
+            padding: 1.2rem 1.8rem;
             border-radius: 1rem;
-            font-weight: 500;
-            border: 2px solid rgba(245, 101, 101, 0.3);
+            font-weight: 600;
+            border: 2px solid rgba(245, 101, 101, 0.5);
             backdrop-filter: blur(8px);
             animation: shake 0.5s ease-in-out;
+            position: relative;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 10px 25px rgba(245, 101, 101, 0.15);
+            z-index: 100;
+            font-size: 1.1rem;
         }
 
         @keyframes shake {
@@ -1012,11 +1219,81 @@
         #errorMessage.show {
             display: block;
         }
+        
+        /* Pulse animation for error messages */
+        #errorMessage::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: inherit;
+            border: 2px solid rgba(245, 101, 101, 0.4);
+            opacity: 0;
+            z-index: -1;
+            animation: errorPulse 2s infinite;
+        }
+        
+        @keyframes errorPulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.03); opacity: 0; }
+            100% { transform: scale(1.06); opacity: 0; }
+        }
+        
+        .global-error {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.95) 0%, rgba(229, 62, 62, 0.95) 100%);
+            color: white;
+            padding: 1.2rem 1.8rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            max-width: 90%;
+            text-align: center;
+            animation: fadeInDown 0.5s forwards;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+        
+        @keyframes fadeOutUp {
+            from {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+            to {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: translate(-50%, 0) scale(1); }
+            50% { transform: translate(-50%, 0) scale(1.03); }
+            100% { transform: translate(-50%, 0) scale(1); }
+        }
 
     </style>
 </head>
 <body>
     <div class="particles" id="particles"></div>
+    
+    <!-- Global error message that's always visible when shown -->
+    <div id="globalErrorMessage" class="global-error" style="display: none;"></div>
     
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
@@ -1064,12 +1341,15 @@
                     <h3 class="section-title">Ảnh sản phẩm</h3>
                     <div class="image-container">
                         <img id="resultImage" class="uploaded-image" alt="Uploaded product image">
-                        <img id="heatmapOverlay" class="heatmap-overlay" alt="AI attention heatmap overlay" style="display: none;">
+                    </div>
+                    <div class="heatmap-container-inline">
+                        <img id="heatmapOverlay" class="heatmap-image-inline" alt="AI Analysis Heatmap">
+                        <p class="heatmap-caption">Bản đồ nhiệt phân tích sản phẩm</p>
                     </div>
                 </div>
                 
                 <div class="analysis-column">
-                    <h3 class="section-title">Kết quả phân tích</h3>
+                    <h3 class="section-title" style="text-align:center;">Kết quả phân tích</h3>
                     <div class="analysis-result">
                         <div id="resultStatus" class="result-status">
                             <span id="resultIcon"></span>
@@ -1081,21 +1361,14 @@
                         </div>
                         
                         <div class="ai-analysis">
-                            <h4 style="margin-bottom: 0.75rem; color: var(--primary-text); font-size: 1.1rem;">Phân tích của AI:</h4>
+                            <h3 class="ai-analysis-title">Phân Tích Chuyên Sâu Giày</h3>
                             <div id="analysisText" class="analysis-text"></div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Heatmap Section riêng -->
-            <div id="heatmapStandalone" class="heatmap-section-standalone">
-                <h3>Bản đồ nhiệt AI Focus</h3>
-                <p>Vùng đỏ/vàng cho thấy những khu vực mà AI tập trung phân tích nhiều nhất để đưa ra kết luận</p>
-                <div class="heatmap-container">
-                    <img id="heatmapImageLarge" class="heatmap-large" alt="AI attention heatmap - Large view" style="display: none;">
-                </div>
-            </div>
+            <!-- Heatmap Section removed -->
         </div>
     </div>
 
