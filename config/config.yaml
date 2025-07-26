@@ -1,83 +1,41 @@
+
 model:
   image_size: 224
   patch_size: 16
   num_classes: 2
-  # Note: These parameters are for fallback custom model only
-  # Pretrained ViT will use its own architecture
-  dim: 512           
-  depth: 6           
-  heads: 8           
-  mlp_dim: 2048      
-  dropout: 0.3       # Increased for better regularization
-  stochastic_depth: 0.05
-  # Enhanced pretrained model settings
-  pretrained_model: 'vit_large_patch16_224'  # Upgraded to Large
-  fallback_model: 'vit_base_patch16_224'     # Fallback option
-  drop_rate: 0.4       # Increased dropout
-  attn_drop_rate: 0.3  # Higher attention dropout
-  drop_path_rate: 0.1  # Added drop path
+  embed_dim: 512
+  depth: 12
+  heads: 8
+  mlp_ratio: 4.0
+  dropout: 0.15
+  drop_path_rate: 0.12
+  use_se: true
 
 training:
-  batch_size: 24              # Reduced for larger model
-  num_workers: 4             
-  learning_rate: 0.0002      # Enhanced learning rate
-  classifier_lr: 0.001       # Higher LR for classifier head
-  weight_decay: 0.01         
-  epochs: 50                 # More epochs for better convergence
-  gradient_accumulation_steps: 1  
-  label_smoothing: 0.05      # Reduced for better discrimination
-  confidence_penalty: 0.1    # New: confidence penalty weight
-  use_mixup: true            # Enable mixup
-  use_cutmix: true           # Enable cutmix
-  mixup_alpha: 0.4
-  cutmix_alpha: 1.0
-  mixup_prob: 0.6            # 60% chance of augmentation
-  T_0: 15                    
-  min_lr: 0.0000001          
-  early_stopping_patience: 15  # Increased patience
-  save_interval: 10          
-  use_mixed_precision: true  
-  warmup_epochs: 5           
-  use_tta: true              # Enable Test Time Augmentation
-  tta_frequency: 5           # Apply TTA every 5 epochs
-
-# Data augmentation (optimized for better accuracy)
-data_augmentation:
-  horizontal_flip: 0.5
-  vertical_flip: 0.1         # Added for better augmentation
-  rotation_degrees: 15
-  perspective_distortion: 0.1 # Added perspective transform
-  color_jitter:
-    brightness: 0.2
-    contrast: 0.2
-    saturation: 0.2
-    hue: 0.1
-  random_affine:
-    degrees: 10
-    translate: [0.1, 0.1]
-    scale: [0.9, 1.1]
-  random_erasing:
-    probability: 0.2
-    scale: [0.02, 0.15]
-  random_crop: true
-  crop_size: 224
-  resize_size: 256
-
-# Testing configuration
-testing:
-  batch_size: 32
+  batch_size: 24
   num_workers: 4
+  learning_rate: 0.0002
+  weight_decay: 0.001
+  epochs: 50
+  early_stopping_patience: 7
+  scheduler: cosine
+  grad_accum_steps: 1
+  use_amp: true
+  use_ema: true
+  label_smoothing: 0.05
+  use_mixup: true
+  use_cutmix: true
 
-# Paths
+augmentation:
+  horizontal_flip: 0.5
+  rotation: 10
+  color_jitter: [0.2, 0.2, 0.2, 0.1]
+  random_erasing: 0.1
+
 paths:
-  checkpoint_dir: models/weights
-  log_dir: logs
-  model_dir: 'models'
-  data_dir: 'data'
-  config_dir: 'config'
+  checkpoint_dir: results
+  log_file: logs/training.log
 
-# Logging configuration
 logging:
-  level: 'INFO'
-  format: '%(asctime)s - %(levelname)s - %(message)s'
-  log_interval: 10 
+  level: INFO
+  log_interval: 10

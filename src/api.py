@@ -1,114 +1,93 @@
-import os
-import io
-import sys
-import traceback
 from datetime import datetime
+
+import os
 import yaml
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F  # Re-added import for functional API
-from scipy import ndimage  # Added import for ndimage module used in edge_precision calculation
-import cv2  # Added for heatmap generation
-
-# Add src to path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
-try:
-    import timm
-    TIMM_AVAILABLE = True
-except ImportError:
-    print("⚠️ timm not found, using basic model")
-    timm = None
-    TIMM_AVAILABLE = False
-
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from PIL import Image
+from torchvision import transforms
+from utils.heatmap_utils import generate_attention_heatmap, get_focus_region, explain_focus_region
 try:
     from explainer import ExplainabilityAnalyzer
     EXPLAINER_AVAILABLE = True
-    print("✅ ExplainabilityAnalyzer loaded successfully")
-except ImportError as e:
-    print(f"⚠️ ExplainabilityAnalyzer not available: {e}")
+except ImportError:
     EXPLAINER_AVAILABLE = False
-
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
-import torchvision.transforms as transforms
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+import cv2
+import traceback
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend
-from product_knowledge import ProductAnalyzer
+import io
+from scipy import ndimage
 
-app = FastAPI(title="KL Fake Detection API", version="5.0")
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- Load config.yaml and set up globals early ---
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
+config_path = os.path.join(project_root, 'config', 'config.yaml')
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
 
-# Global variables
+uploads_dir = os.path.join(project_root, "uploads")
+if not os.path.exists(uploads_dir):
+    os.makedirs(uploads_dir)
+
+class_names = ['Fake', 'Real']
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = None
 analyzer = None
-transform = None
-class_names = ['Fake', 'Real']
+app = FastAPI()
 
 def load_best_model():
-    """Load the best trained model from the latest results folder."""
-    global model, analyzer
-    
+    """Load the best model from the 'models' directory"""
+    global model
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        results_dir = os.path.join(os.path.dirname(current_dir), 'results')
-        
-        if not os.path.exists(results_dir):
-            print("⚠️ Results directory not found.")
+        # Find the latest model folder
+        model_dirs = [d for d in os.listdir('models') if os.path.isdir(os.path.join('models', d))]
+        if not model_dirs:
+            print("⚠️ No model directories found. Please upload a model.")
             return False
 
+        latest_folder = max(model_dirs, key=lambda d: os.path.getmtime(os.path.join('models', d)))
+        print(f"🔍 Found model directory: {latest_folder}")
 
-        # Always use the specified model folder
-        target_folder = '20250722_094611'
-        model_path = os.path.join(results_dir, target_folder, 'best_model.pth')
-        if not os.path.exists(model_path):
-            print(f"⚠️ Specified model folder '{target_folder}' or best_model.pth not found.")
-            return False
-
+        # Load the model
+        model_path = os.path.join('models', latest_folder, 'best_model.pth')
         if os.path.exists(model_path):
-            # Load model architecture from config to ensure consistency
-            config_path = os.path.join(os.path.dirname(current_dir), 'config', 'config.yaml')
-            with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
-            model_name = config['model'].get('name', 'vit_base_patch16_224')
-            num_classes = config['model']['num_classes']
-
-            # Create model instance without pretrained weights, as we'll load our own
-            if TIMM_AVAILABLE:
-                model = timm.create_model(model_name, pretrained=False, num_classes=num_classes)
-            else:
-                print("⚠️ Using fallback model without timm")
-                return False
-            
-            # Load the state dictionary from our checkpoint
             checkpoint = torch.load(model_path, map_location=device)
-            model.load_state_dict(checkpoint['model_state_dict'])
+            model = checkpoint['model']
             model.to(device)
             model.eval()
-            
-            # Initialize the analyzer if available
+
+            # Load the analyzer if available
             if EXPLAINER_AVAILABLE:
+                global analyzer
                 analyzer = ExplainabilityAnalyzer(model, class_names)
+                print("✅ Analyzer loaded.")
             else:
-                analyzer = None
-                print("⚠️ Analyzer not available, using basic prediction only")
-                
+                print("⚠️ Analyzer not available.")
+
+            # Print model summary
+            print(model)
+            # Log model info to file
+            api_log_path = os.path.join(project_root, 'logs', 'api_model_info.log')
+            with open(api_log_path, 'a', encoding='utf-8') as api_log:
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                model_name = type(model).__name__
+                try:
+                    embed_dim = getattr(model, 'head', None)
+                    if hasattr(model, 'patch_embed'):
+                        embed_dim = model.patch_embed.proj.out_channels
+                    else:
+                        embed_dim = 'N/A'
+                except Exception:
+                    embed_dim = 'N/A'
+                api_log.write(f"{now} - INFO - Model loaded: {model_name}, embed_dim={embed_dim}\n")
+
+            # Check accuracy if available
             accuracy = checkpoint.get('accuracy', 'N/A')
             if isinstance(accuracy, float):
                 print(f"✅ Loaded best model from '{latest_folder}' with accuracy {accuracy:.2%}")
@@ -132,7 +111,7 @@ def fallback_to_pretrained():
     
     # Create a simple CNN model that doesn't require external dependencies
     class SimpleCNN(nn.Module):
-        def __init__(self, num_classes=2):
+        def __init__(self, num_classes):
             super(SimpleCNN, self).__init__()
             self.features = nn.Sequential(
                 nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
@@ -168,17 +147,12 @@ def fallback_to_pretrained():
             return x
     
     try:
-        if TIMM_AVAILABLE:
-            # Try to use timm if available
-            model = timm.create_model('vit_base_patch16_224', pretrained=True, num_classes=2)
-            print("✅ Using timm ViT model")
-        else:
-            # Use simple CNN
-            model = SimpleCNN(num_classes=2)
-            print("✅ Using simple CNN model")
+        # Use simple CNN
+        model = SimpleCNN(num_classes=config['model']['num_classes'])
+        print("✅ Using simple CNN model")
     except Exception as e:
         print(f"⚠️ Model creation error: {e}")
-        model = SimpleCNN(num_classes=2)
+        model = SimpleCNN(num_classes=config['model']['num_classes'])
         print("✅ Using fallback CNN model")
     
     model.to(device)
@@ -195,11 +169,14 @@ def fallback_to_pretrained():
 def setup_transform():
     """Setup image transforms"""
     global transform
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+    model_cfg = config['model']
+    aug_cfg = config['augmentation']
+    transform_list = [
+        transforms.Resize((model_cfg['image_size'], model_cfg['image_size'])),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
+    ]
+    transform = transforms.Compose(transform_list)
 
 # --- Initialization ---
 setup_transform()
@@ -221,119 +198,60 @@ app.mount("/static", StaticFiles(directory=web_dir), name="static")
 async def root():
     """Serve the main UI"""
     try:
-        index_path = os.path.join(web_dir, "index.html")
-        with open(index_path, 'r', encoding='utf-8') as f:
-            return f.read()
+        with open("web/index.html", "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
     except Exception as e:
-        return HTMLResponse(content=f"<h1>Error loading UI: {str(e)}</h1>", status_code=500)
+        print(f"❌ Error loading UI: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     """🔥 ENHANCED: Endpoint with superior heatmap generation"""
-    if not model or not analyzer:
+    if not model:
         raise HTTPException(status_code=503, detail="Model not loaded. Please try again later.")
-
     try:
-        # Read image
+        # Đọc ảnh và chuyển về tensor
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
-        
-        # Transform - ensure correct tensor shape [1, 3, 224, 224]
         img_tensor = transform(image).unsqueeze(0).to(device)
-
-        # 🔥 Get enhanced prediction and explanation with realistic analysis
-        result = analyzer.predict_with_explanation(img_tensor, np.array(image))
-
-        # Save visualizations with enhanced quality
+        # Dự đoán
+        with torch.no_grad():
+            outputs = model(img_tensor)
+            probabilities = F.softmax(outputs, dim=1)
+            confidence = probabilities.max().item()
+            predicted_idx = probabilities.argmax().item()
+            predicted_class = class_names[predicted_idx]
+        # Lấy attention map từ ViT
+        if hasattr(model, 'get_attention_maps'):
+            attn_maps = model.get_attention_maps(img_tensor)
+            attn = attn_maps[-1].mean(1)[0]
+            patch_num = int((attn.shape[0]-1)**0.5)
+            heatmap = attn[1:].reshape(patch_num, patch_num).cpu().numpy()
+        else:
+            patch_num = config['model']['image_size'] // config['model']['patch_size']
+            heatmap = np.ones((patch_num, patch_num)) * 0.5
+        # Tạo và lưu heatmap
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         heatmap_path = os.path.join(uploads_dir, f'heatmap_{timestamp}.png')
-        analysis_path = os.path.join(uploads_dir, f'analysis_{timestamp}.png')
-        
-        # 🔥 Save enhanced primary heatmap with custom colormap
-        plt.figure(figsize=(10, 10))
-        if hasattr(analyzer, 'cmap_heat'):
-            plt.imshow(result['heatmap'], cmap=analyzer.cmap_heat)
-        else:
-            plt.imshow(result['heatmap'], cmap='hot')
-        plt.axis('off')
-        plt.title(f"🔥 Enhanced Attention - {result['prediction']} ({result['confidence']:.1%})", 
-                 fontsize=16, weight='bold', color='darkblue')
-        plt.savefig(heatmap_path, bbox_inches='tight', dpi=200, facecolor='white')
-        plt.close()
-        
-        # 🔥 Save comprehensive analysis visualization
-        try:
-            analyzer.visualize_explanation(np.array(image), result, save_path=analysis_path)
-        except Exception as e:
-            print(f"⚠️ Advanced visualization failed: {e}")
-            # Create simple analysis plot as fallback
-            plt.figure(figsize=(12, 8))
-            plt.subplot(1, 2, 1)
-            plt.imshow(np.array(image))
-            plt.title('Original Image')
-            plt.axis('off')
-            plt.subplot(1, 2, 2)
-            plt.imshow(result['heatmap'], cmap='hot')
-            plt.title('Attention Heatmap')
-            plt.axis('off')
-            plt.savefig(analysis_path, bbox_inches='tight', dpi=150)
-            plt.close()
-        
-        plt.close('all')  # Close all matplotlib figures to prevent memory leaks
-
-        # 🔥 Additional heatmap variants (if multiple methods were used)
-        additional_heatmaps = []
-        if 'all_heatmaps' in result and len(result['all_heatmaps']) > 1:
-            for hmap_type, hmap_data in result['all_heatmaps'].items():
-                if hmap_type != 'enhanced' and hmap_data is not None:
-                    variant_path = os.path.join(uploads_dir, f'heatmap_{hmap_type}_{timestamp}.png')
-                    
-                    plt.figure(figsize=(8, 8))
-                    if hmap_type == 'gradient':
-                        plt.imshow(hmap_data, cmap='plasma')
-                    elif hmap_type == 'fused':
-                        plt.imshow(hmap_data, cmap='viridis')
-                    else:
-                        plt.imshow(hmap_data, cmap='coolwarm')
-                    
-                    plt.axis('off')
-                    plt.title(f"{hmap_type.title()} Attention", fontsize=14, weight='bold')
-                    plt.savefig(variant_path, bbox_inches='tight', dpi=150)
-                    plt.close()
-                    
-                    additional_heatmaps.append({
-                        "type": hmap_type,
-                        "url": "/uploads/" + os.path.basename(variant_path)
-                    })
-
-        # Make paths web-accessible
+        generate_attention_heatmap(image, heatmap, save_path=heatmap_path)
+        # Phân tích vùng focus
+        heatmap_resized = cv2.resize(heatmap, (config['model']['image_size'], config['model']['image_size']), interpolation=cv2.INTER_CUBIC)
+        focus_patch, (max_y, max_x) = get_focus_region(heatmap_resized, np.array(image), patch_size=config['model']['patch_size'])
+        explanation = explain_focus_region(focus_patch, predicted_class)
+        # Trả về kết quả
         heatmap_url = "/uploads/" + os.path.basename(heatmap_path)
-        analysis_url = "/uploads/" + os.path.basename(analysis_path)
-
-        # 🔥 Enhanced response with more detailed information
         response_data = {
-            "prediction": result['prediction'],
-            "confidence": round(result['confidence'] * 100, 2),
-            "explanation": {
-                "heatmap": heatmap_url,
-                "analysis_plot": analysis_url,
-                "text": result['explanation']
-            },
-            "enhanced_features": {
-                "attention_methods": result.get('attention_methods', ['basic']),
-                "model_type": result.get('model_type', 'unknown'),
-                "analysis_depth": "enhanced" if len(result.get('all_heatmaps', {})) > 1 else "standard"
-            }
+            "prediction": predicted_class,
+            "confidence": round(confidence * 100, 2),
+            "heatmap": heatmap_url,
+            "focus_explanation": explanation
         }
-        
-        # Add additional heatmaps if available
-        if additional_heatmaps:
-            response_data["explanation"]["additional_heatmaps"] = additional_heatmaps
-
-        # Add product-specific analysis if available
-        if 'product_analysis' in result:
-            response_data["product_analysis"] = result['product_analysis']
-
+        return JSONResponse(response_data)
+    except Exception as e:
+        print(f"🔥 Enhanced prediction error: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Enhanced analysis failed: {e}")
         return JSONResponse(response_data)
 
     except Exception as e:
@@ -658,7 +576,7 @@ async def analyze(file: UploadFile = File(...)):
                         
                         # Clear scientific conclusion
                         certainty = min(95, int(confidence * 100))
-                        explanation += f"\n⚠️ **Kết luận ({certainty}% chắc chắn)**: Sản phẩm này có **{len(defects) + len(evidence)} dấu hiệu vi cấu trúc** chỉ ra đây là hàng **KHÔNG CHÍNH HÃNG**."
+                        explanation += f"\n⚠️ **Kết luận ({certainty}% chắc chắn)**: Sản phẩm này có **KHÔNG CHÍNH HÃNG**."
                     
                     else:
                         # Scientific evidence for authentic product
@@ -717,7 +635,7 @@ async def analyze(file: UploadFile = File(...)):
                         
                         # Clear scientific conclusion
                         certainty = min(99, int(confidence * 100))
-                        explanation += f"\n✅ **Kết luận ({certainty}% chắc chắn)**: Sản phẩm này thể hiện **{len(authenticity) + len(evidence)} đặc điểm vi cấu trúc** chỉ ra đây là hàng **CHÍNH HÃNG**."
+                        explanation += f"\n✅ **Kết luận ({certainty}% chắc chắn)**: Sản phẩm này thể hiện **CHÍNH HÃNG**."
                 
                 elif detected_product_type == "clothing":
                     # Advanced clothing authenticity analysis based on forensic image metrics
@@ -823,7 +741,7 @@ async def analyze(file: UploadFile = File(...)):
                                 explanation += f"• **{key.replace('_', ' ').title()}**: {value}\n"
                         
                         # Add confident conclusion based on expert assessment
-                        explanation += f"\n✅ **Kết luậns**: Sản phẩm này thể hiện **{len(strengths) + 1} đặc điểm của hàng CHÍNH HÃNG** dựa trên phân tích quang phổ và đường may."
+                        explanation += f"\n✅ **Kết luận**: Sản phẩm này thể hiện **{len(strengths) + 1} đặc điểm của hàng CHÍNH HÃNG** dựa trên phân tích quang phổ và đường may."
                 
                 else:
                     # Generic accessories or other products
@@ -873,237 +791,6 @@ async def analyze(file: UploadFile = File(...)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
 
-        # Generate focused heatmap with vibrant colormap that highlights key features
-        heatmap_path = os.path.join(uploads_dir, f"heatmap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-        
-        # Create a more focused heatmap that concentrates heat on specific regions
-        # instead of being randomly distributed
-        h, w = image.size
-        heatmap_data = np.zeros((224, 224))
-        
-        # CRITICAL PRODUCT AREA IDENTIFICATION
-        # Step 1: Setup high-precision grid for ultra-focused heatmap
-        x = np.arange(0, 224, 1)
-        y = np.arange(0, 224, 1)
-        x_grid, y_grid = np.meshgrid(x, y)
-        
-        # Step 2: High-resolution image preprocessing for key feature extraction
-        img_array = np.array(image.resize((224, 224), Image.LANCZOS))  # Use LANCZOS for best quality
-        
-        # Step 3: Enhanced grayscale conversion with perceptual weights for human vision
-        if len(img_array.shape) == 3 and img_array.shape[2] == 3:
-            # Using precise human perception weights for better feature detection
-            gray_img = 0.299 * img_array[:,:,0] + 0.587 * img_array[:,:,1] + 0.114 * img_array[:,:,2]
-        else:
-            gray_img = img_array
-        
-        # Step 4: Advanced multi-scale edge detection (combines results at different scales)
-        # This approach catches both fine details (logos, stitching) and larger structures
-        edge_maps = []
-        
-        # Multi-scale edge detection to capture features at different sizes
-        for sigma in [0.5, 1, 2]:  # Multiple scales for different feature sizes
-            gx = ndimage.gaussian_filter(gray_img, sigma=sigma, order=[0, 1])
-            gy = ndimage.gaussian_filter(gray_img, sigma=sigma, order=[1, 0])
-            edge_maps.append(np.sqrt(gx**2 + gy**2))
-        
-        # Combine the edge maps with weights favoring fine details
-        combined_edges = edge_maps[0]*0.5 + edge_maps[1]*0.3 + edge_maps[2]*0.2
-        
-        # Step 5: Apply bilateral filter to preserve edges while removing noise
-        # ndimage already imported at the top of the file
-        smoothed_edges = ndimage.gaussian_filter(combined_edges, sigma=1.5)
-        
-        # Step 6: Structure tensor analysis to detect corners and junctions 
-        # (these are often authentication markers in products)
-        structure_tensor = np.zeros((224, 224))
-        gxx = ndimage.gaussian_filter(gx * gx, sigma=1)
-        gxy = ndimage.gaussian_filter(gx * gy, sigma=1)
-        gyy = ndimage.gaussian_filter(gy * gy, sigma=1)
-        
-        # Compute cornerness measure (Harris corner detector modified)
-        det = gxx * gyy - gxy * gxy
-        trace = gxx + gyy
-        k = 0.05  # Harris detector free parameter
-        cornerness = det - k * (trace ** 2)
-        
-        # Step 7: Identify product-specific critical authentication regions
-        if detected_product_type == "shoes":
-            # For shoes, focus on logo areas, stitching patterns, and sole texture
-            # Weight the top portion of shoes more (logos, authentic markers)
-            h, w = smoothed_edges.shape
-            top_region_weight = np.ones((h, w))
-            top_region_weight[:h//3, :] *= 1.5  # Weight logos/top features higher
-            
-            # Weight edges by region importance
-            weighted_features = smoothed_edges * top_region_weight
-        else:
-            # For other products, use cornerness to highlight unique identifying features
-            weighted_features = smoothed_edges + cornerness * 0.3
-        
-        # Step 8: Find the primary authentication feature (maximum weighted importance)
-        max_y, max_x = np.unravel_index(np.argmax(weighted_features), weighted_features.shape)
-        
-        # Step 9: Generate ultra-tight focus on the critical authentication area
-        sigma_primary = 6  # Extremely tight focus for pinpoint accuracy
-        primary_intensity = 3.0  # Intensified focus on the key area
-        heatmap_data += primary_intensity * np.exp(-((x_grid - max_x)**2 + (y_grid - max_y)**2) / (2 * sigma_primary**2))
-        
-        # Step 10: Expert-level product-specific authentication point identification
-        # Different products have different key authentication features
-        if detected_product_type == "shoes":
-            # SHOE-SPECIFIC AUTHENTICATION MARKERS
-            # For shoes: critical authentication points are logos, stitching patterns, material texture
-            edge_copy = weighted_features.copy()
-            
-            # Create precise exclusion zone around primary feature
-            mask_radius = 35  # Larger exclusion zone for cleaner visualization
-            y_indices, x_indices = np.ogrid[:224, :224]
-            mask = (x_indices - max_x)**2 + (y_indices - max_y)**2 <= mask_radius**2
-            edge_copy[mask] = 0
-            
-            # Identify brand-specific authentication locations (high-contrast edges near top of shoe)
-            # These correspond to logos, serial numbers and brand identifiers
-            h, w = edge_copy.shape
-            edge_copy[:h//2, :] *= 1.2  # Weight upper shoe features slightly higher
-            
-            # Add precisely-placed minor verification points with minimal intensity
-            # These create a professional heatmap focused primarily on one area
-            verification_points = 2  # Only add minimal secondary points
-            for i in range(verification_points):
-                if np.max(edge_copy) > 0:
-                    sec_y, sec_x = np.unravel_index(np.argmax(edge_copy), edge_copy.shape)
-                    
-                    # Calculate distance-based intensity falloff (further points get less intensity)
-                    distance = np.sqrt((sec_y - max_y)**2 + (sec_x - max_x)**2) / 224
-                    intensity_factor = 1.0 - min(0.8, distance)  # Max 80% falloff
-                    
-                    # Add minimal secondary verification point (much lower intensity)
-                    sigma_sec = 10 + i*3  # Progressively wider secondary points
-                    sec_intensity = 0.25 * intensity_factor  # Very minor intensity for clean focus
-                    heatmap_data += sec_intensity * np.exp(-((x_grid - sec_x)**2 + (y_grid - sec_y)**2) / (2 * sigma_sec**2))
-                    
-                    # Mask out verification point area for next iteration
-                    sec_mask_radius = 30
-                    sec_mask = (x_indices - sec_x)**2 + (y_indices - sec_y)**2 <= sec_mask_radius**2
-                    edge_copy[sec_mask] = 0
-        
-        else:  # For clothing or other products
-            # CLOTHING/ACCESSORY-SPECIFIC AUTHENTICATION POINTS
-            # Pattern consistency, material texture, and tag locations are key
-            edge_copy = weighted_features.copy()
-            
-            # Advanced feature isolation with selective mask
-            mask_radius = 30
-            y_indices, x_indices = np.ogrid[:224, :224]
-            mask = (x_indices - max_x)**2 + (y_indices - max_y)**2 <= mask_radius**2
-            edge_copy[mask] = 0
-            
-            # Calculate feature density map for identifying regions with high information content
-            feature_density = ndimage.gaussian_filter(edge_copy > np.percentile(edge_copy, 75), sigma=5)
-            
-            # Find high-density feature areas that are distinct from primary point
-            # These represent secondary verification points (tags, patterns, material transitions)
-            feature_points = []
-            for _ in range(2):  # Limit to only 2 minor points for clarity
-                if np.max(edge_copy) > 0:
-                    # Weight by both edge strength and feature density
-                    combined_importance = edge_copy * (feature_density + 0.5)
-                    sec_y, sec_x = np.unravel_index(np.argmax(combined_importance), combined_importance.shape)
-                    feature_points.append((sec_y, sec_x))
-                    
-                    # Create exclusion zone around this point
-                    sec_mask_radius = 25
-                    sec_mask = (x_indices - sec_x)**2 + (y_indices - sec_y)**2 <= sec_mask_radius**2
-                    edge_copy[sec_mask] = 0
-            
-            # Add minimal secondary points with progressive intensity reduction
-            for i, (sec_y, sec_x) in enumerate(feature_points):
-                # Calculate focused yet minimal secondary hotspot
-                sigma_sec = 12 + i*4  # Progressively more diffuse
-                sec_intensity = 0.25 / (i+1)  # Rapidly decreasing intensity
-                heatmap_data += sec_intensity * np.exp(-((x_grid - sec_x)**2 + (y_grid - sec_y)**2) / (2 * sigma_sec**2))
-        
-        # Step 11: Professional-grade visualization enhancement
-        # Apply extreme contrast enhancement with advanced algorithm
-        # This creates dramatic difference between authentication point and rest of image
-        power = 3.5  # Higher power for extreme focus
-        heatmap_data = heatmap_data ** power
-        
-        # Apply logarithmic normalization (emphasizes differences at the high end)
-        # This creates an even more dramatic focus effect than linear normalization
-        log_data = np.log1p(heatmap_data)  # log(1+x) to handle zeros
-        heatmap_data = log_data / (np.max(log_data) + 1e-8)
-        
-        # Create high-end professional colormap with precise color control
-        from matplotlib.colors import LinearSegmentedColormap
-        
-        # Expert colormap with careful opacity control - almost invisible except at key point
-        # This creates the effect of a precision laser pointer highlighting only what matters
-        expert_colors = [
-            (0.0, (0.0, 0.0, 0.0, 0.0)),       # Completely invisible for lowest values
-            (0.7, (0.0, 0.0, 0.5, 0.0)),       # Still invisible up to 70% of range
-            (0.8, (0.0, 0.0, 0.8, 0.05)),      # Barely visible blue at 80%
-            (0.85, (0.0, 0.3, 0.7, 0.1)),      # Slight purple hint at 85%
-            (0.9, (0.7, 0.0, 0.5, 0.3)),       # Medium magenta at 90%
-            (0.95, (1.0, 0.0, 0.0, 0.6)),      # Bright red at 95%
-            (0.97, (1.0, 0.5, 0.0, 0.8)),      # Orange-red at 97%
-            (0.99, (1.0, 0.8, 0.0, 0.9)),      # Orange-yellow at 99%
-            (1.0, (1.0, 1.0, 1.0, 1.0))        # Pure white at 100% (critical point)
-        ]
-                 
-        expert_cmap = LinearSegmentedColormap.from_list('precision_focus', expert_colors)
-        
-        # Create professional visualization with enhanced clarity
-        plt.figure(figsize=(10, 10), dpi=300)  # Higher DPI for professional quality
-        
-        # Apply subtle sharpening to original image for better feature visibility
-        # ndimage already imported at the top of the file
-        sharpened = img_array.astype(float)
-        blurred = ndimage.gaussian_filter(sharpened, sigma=1.0)
-        high_freq = sharpened - blurred
-        sharpened = sharpened + 0.5 * high_freq  # Enhance edges by 50%
-        sharpened = np.clip(sharpened, 0, 255).astype(np.uint8)  # Ensure valid range
-        
-        # Plot the enhanced image
-        plt.imshow(sharpened)
-        
-        # Overlay precision heatmap with advanced colormap
-        heatmap_overlay = plt.imshow(heatmap_data, cmap=expert_cmap, alpha=0.8)
-        plt.axis('off')
-        
-        # Add professional, minimalist label
-        if is_fake:
-            plt.text(5, 15, "⚠️ ĐIỂM NHẬN DIỆN HÀNG GIẢ", 
-                    fontsize=14, color='white', fontweight='bold',
-                    bbox=dict(facecolor='darkred', alpha=0.7, pad=5, boxstyle='round'))
-        else:
-            plt.text(5, 15, "✓ ĐIỂM XÁC THỰC CHÍNH HÃNG", 
-                    fontsize=14, color='white', fontweight='bold',
-                    bbox=dict(facecolor='darkgreen', alpha=0.7, pad=5, boxstyle='round'))
-        
-        # Save with extreme quality settings
-        plt.savefig(heatmap_path, bbox_inches='tight', dpi=300, 
-                   facecolor='black', edgecolor='none', 
-                   pad_inches=0.1, transparent=False)
-        plt.close()
-
-        # Format confidence to two decimal places
-        confidence = round(confidence * 100, 2)
-
-        # Response format
-        response_data = {
-            "prediction": predicted_class,
-            "confidence": confidence,
-            "feature_analysis": feature_analysis,
-            "heatmap": "/uploads/" + os.path.basename(heatmap_path)
-        }
-        return JSONResponse(response_data)
-
-    except Exception as e:
-        print(f"Analysis error: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
-
 @app.get("/status")
 def get_status():
     """API status with capability information"""
@@ -1112,7 +799,6 @@ def get_status():
         "model_loaded": model is not None,
         "analyzer_initialized": analyzer is not None,
         "explainer_available": EXPLAINER_AVAILABLE,
-        "timm_available": TIMM_AVAILABLE,
         "device": str(device),
         "version": "7.0 - Fixed Connection Issues",
         "features": {

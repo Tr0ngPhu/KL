@@ -82,9 +82,17 @@ def load_model():
         checkpoint_path = find_latest_checkpoint()
         if checkpoint_path:
             checkpoint = torch.load(checkpoint_path, map_location=device)
-            model.load_state_dict(checkpoint['model_state_dict'])
-            logging.info(f'Model được load từ: {checkpoint_path}')
-            logging.info(f'Độ chính xác model: {checkpoint.get("val_acc", "N/A"):.2f}%')
+            try:
+                # Load với strict=False để bỏ qua key mismatch
+                result = model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+                logging.info(f'Model được load từ: {checkpoint_path}')
+                logging.info(f'Độ chính xác model: {checkpoint.get("val_acc", "N/A"):.2f}%')
+                if result.missing_keys or result.unexpected_keys:
+                    logging.warning(f"Missing keys: {result.missing_keys}")
+                    logging.warning(f"Unexpected keys: {result.unexpected_keys}")
+            except Exception as e:
+                logging.error(f'Lỗi khi load state_dict với strict=False: {e}')
+                return False
         else:
             logging.error('Không tìm thấy checkpoint để test!')
             return False
@@ -142,36 +150,49 @@ def test_folder(test_folder_path):
     
     results = []
     image_extensions = ['.jpg', '.jpeg', '.png']
+    # Đảm bảo thư mục logs tồn tại
+    logs_dir = os.path.join(os.path.dirname(current_dir), 'logs')
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+    log_file = os.path.join(logs_dir, 'test_results.txt')
     
-    for filename in os.listdir(test_folder_path):
-        if any(filename.lower().endswith(ext) for ext in image_extensions):
-            image_path = os.path.join(test_folder_path, filename)
-            result = test_single_image(image_path)
-            if result:
-                results.append(result)
-                logging.info(f'{filename}: {result["class"]} ({result["confidence"]}%)')
-    
-    # Thống kê
-    if results:
-        total = len(results)
-        real_count = sum(1 for r in results if r['is_real'])
-        fake_count = total - real_count
-        
-        logging.info(f'\n=== THỐNG KÊ TEST ===')
-        logging.info(f'Tổng số ảnh: {total}')
-        logging.info(f'Dự đoán THẬT: {real_count} ({real_count/total*100:.1f}%)')
-        logging.info(f'Dự đoán GIẢ: {fake_count} ({fake_count/total*100:.1f}%)')
-        logging.info(f'Confidence trung bình: {sum(r["confidence"] for r in results)/total:.2f}%')
-    
+    with open(log_file, 'a', encoding='utf-8') as f:
+        f.write(f'\n=== TEST FOLDER: {test_folder_path} ===\n')
+        for filename in os.listdir(test_folder_path):
+            if any(filename.lower().endswith(ext) for ext in image_extensions):
+                image_path = os.path.join(test_folder_path, filename)
+                result = test_single_image(image_path)
+                if result:
+                    results.append(result)
+                    log_line = f"{filename}: {result['class']} ({result['confidence']}%)\n"
+                    logging.info(log_line.strip())
+                    f.write(log_line)
+        # Thống kê
+        if results:
+            total = len(results)
+            real_count = sum(1 for r in results if r['is_real'])
+            fake_count = total - real_count
+            avg_conf = sum(r["confidence"] for r in results)/total
+            f.write(f'---\nTổng số ảnh: {total}\n')
+            f.write(f'Dự đoán THẬT: {real_count} ({real_count/total*100:.1f}%)\n')
+            f.write(f'Dự đoán GIẢ: {fake_count} ({fake_count/total*100:.1f}%)\n')
+            f.write(f'Confidence trung bình: {avg_conf:.2f}%\n')
+            f.write('=== END FOLDER ===\n')
     return results
 
 def main():
     """Hàm chính để test"""
     logging.info('=== KHỞI ĐỘNG TEST ===')
-    
-    # Load model
+    # Đảm bảo thư mục logs tồn tại
+    logs_dir = os.path.join(os.path.dirname(current_dir), 'logs')
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+    log_file = os.path.join(logs_dir, 'test_results.txt')
+    # Ghi log lỗi vào file nếu có
     if not load_model():
         logging.error('Không thể load model để test!')
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Không thể load model để test!\n')
         return
     
     # Test một ảnh đơn lẻ (thay đổi đường dẫn)

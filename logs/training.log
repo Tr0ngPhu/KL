@@ -1,4 +1,3 @@
- 
 2025-07-17 19:57:31,088 - INFO - Using device: cpu
 2025-07-17 19:57:31,286 - INFO - Class counts: [ 9666 11468]
 2025-07-17 19:57:31,286 - INFO - Class weights: [1.04817335 0.95182665]
@@ -71,3 +70,19 @@
 2025-07-17 21:41:51,819 - INFO - Dataset loaded: 21134 images (Real: 11468, Fake: 9666)
 2025-07-17 21:41:51,823 - INFO - Dataset loaded: 1741 images (Real: 902, Fake: 839)
 2025-07-17 21:41:51,824 - INFO - Class balance - Fake: 9666, Real: 11468 (weights: 1.048, 0.952)
+
+
+
+
+
+2025-07-24 22:28:53,138 - INFO - Training completed
+2025-07-24 22:28:53,138 - INFO - Best Validation Accuracy: 60.83%
+2025-07-24 22:28:53,138 - INFO - Model: vit_base_patch16_224
+2025-07-24 22:28:53,138 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.4, attn_drop_rate=0.3, mixup=True, cutmix=True, label_smoothing=0.05
+2025-07-24 22:28:53,138 - INFO - Dataset: 21134 train, 1741 val (Fake: 9666, Real: 11468)
+2025-07-25 16:38:31,996 - INFO - Training completed
+2025-07-25 16:38:31,996 - INFO - Best Validation Accuracy: 62.42%
+2025-07-25 16:38:31,996 - INFO - Model: VisionTransformer
+2025-07-26 07:29:55,406 - INFO - Training completed
+2025-07-26 07:29:55,406 - INFO - Best Validation Accuracy: 73.27%
+2025-07-26 07:29:55,406 - INFO - Model: VisionTransformer
