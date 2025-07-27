@@ -1,85 +1,77 @@
+# Standard library imports
 import os
-from torch.utils.data import Dataset
+import warnings
+import random
+
+# Third-party imports
 from PIL import Image
-import torchvision.transforms as transforms
-import logging
 import numpy as np
+import torchvision.transforms as transforms
+from torch.utils.data import Dataset
 
 # Disable PIL warnings
-import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 class CustomDataset(Dataset):
-    def __init__(self, data_dir, transform=None):
-        self.data_dir = data_dir
-        self.transform = transform or transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+    def __init__(self, data_dir, transform=None, use_albumentations=False):
+        self.transform = transform
+        self.use_albumentations = use_albumentations
         self.images = []
         self.labels = []
-        
-        # Enhanced image loading with quality filtering
         valid_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.tiff')
-        
-        for label in ['real', 'fake']:
-            label_dir = os.path.join(data_dir, label)
-            if os.path.exists(label_dir):
+        class_counts = {'real': 0, 'fake': 0}
+
+        # Try the provided data_dir, then fallback to src/data/... if empty
+        tried_dirs = [data_dir]
+        if os.path.normpath(data_dir).startswith('data') and not os.path.isabs(data_dir):
+            alt_dir = os.path.join('src', data_dir)
+            tried_dirs.append(alt_dir)
+        elif os.path.normpath(data_dir).startswith(os.path.join(os.getcwd(), 'data')):
+            alt_dir = os.path.join(os.getcwd(), 'src', 'data', os.path.basename(data_dir))
+            tried_dirs.append(alt_dir)
+
+        found = False
+        for try_dir in tried_dirs:
+            self.images.clear()
+            self.labels.clear()
+            class_counts = {'real': 0, 'fake': 0}
+            for label in ['real', 'fake']:
+                label_dir = os.path.join(try_dir, label)
+                if not os.path.exists(label_dir) or not os.path.isdir(label_dir):
+                    continue
                 for img_name in os.listdir(label_dir):
-                    if img_name.lower().endswith(valid_extensions):
-                        img_path = os.path.join(label_dir, img_name)
-                        # Quick quality check
-                        try:
-                            with Image.open(img_path) as img:
-                                img = img.convert('RGB')
-                                if img.size[0] >= 50 and img.size[1] >= 50:  # Min size filter
-                                    self.images.append(img_path)
-                                    self.labels.append(1 if label == 'real' else 0)
-                        except Exception:
-                            continue  # Skip corrupted images silently
-        
-        if len(self.images) == 0:
-            print(f'No valid images found in {data_dir}')
-        else:
-            print(f'Loaded {len(self.images)} images')
+                    # Only accept files with valid image extensions, skip hidden and non-image files
+                    if not img_name.lower().endswith(valid_extensions):
+                        continue
+                    img_path = os.path.join(label_dir, img_name)
+                    # Skip files that are not actual files (e.g., directories, .gitkeep, etc.)
+                    if not os.path.isfile(img_path):
+                        continue
+                    try:
+                        with Image.open(img_path) as img:
+                            img = img.convert('RGB')
+                            if img.size[0] >= 50 and img.size[1] >= 50:
+                                self.images.append(img_path)
+                                self.labels.append(1 if label == 'real' else 0)
+                                class_counts[label] += 1
+                    except Exception:
+                        pass
+            if len(self.images) > 0:
+                found = True
+                break
+        if not found:
+            raise RuntimeError('No valid images found in any of the tried directories. Please check your data folders.')
     
     def __len__(self):
         return len(self.images)
     
     def __getitem__(self, idx):
-        # Use a more robust approach to handle corrupted images
-        attempts = 0
-        max_attempts = 5
-        
-        while attempts < max_attempts:
-            try:
-                img_path = self.images[idx % len(self.images)]
-                
-                # Load and validate image
-                with Image.open(img_path) as img:
-                    image = img.convert('RGB')
-                    
-                    # Check image is valid
-                    if image.size[0] < 32 or image.size[1] < 32:
-                        raise ValueError("Image too small")
-                    
-                    # Apply transforms
-                    if self.transform:
-                        image = self.transform(image)
-                    
-                    label = self.labels[idx % len(self.labels)]
-                    return image, label
-                    
-            except Exception:
-                # Move to next image silently
-                idx = (idx + 1) % len(self.images)
-                attempts += 1
-        
-        # If all attempts fail, return a dummy tensor
-        if self.transform:
-            dummy_image = self.transform(Image.new('RGB', (224, 224), color='black'))
-        else:
-            dummy_image = transforms.ToTensor()(Image.new('RGB', (224, 224), color='black'))
-        
-        return dummy_image, 0 
+        img_path = self.images[idx]
+        label = self.labels[idx]
+        with Image.open(img_path) as img:
+            image = img.convert('RGB')
+            if image.size[0] < 32 or image.size[1] < 32:
+                raise ValueError("Image too small")
+            if self.transform:
+                image = self.transform(image)
+            return image, label

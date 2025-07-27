@@ -86,3 +86,23 @@
 2025-07-26 07:29:55,406 - INFO - Training completed
 2025-07-26 07:29:55,406 - INFO - Best Validation Accuracy: 73.27%
 2025-07-26 07:29:55,406 - INFO - Model: VisionTransformer
+2025-07-27 02:07:41,776 - INFO - Training completed
+2025-07-27 02:07:41,776 - INFO - Best Validation Accuracy: 69.04%
+2025-07-27 02:07:41,776 - INFO - Model: VisionTransformer
+2025-07-27 02:07:41,776 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.15, attn_drop_rate=0.12, mixup=True, cutmix=True, label_smoothing=0.05
+2025-07-27 02:07:41,776 - INFO - Dataset: 21626 train, 1796 val (Fake: 9698, Real: 11928)
+2025-07-27 03:21:01,463 - INFO - Training completed
+2025-07-27 03:21:01,463 - INFO - Best Validation Accuracy: 56.12%
+2025-07-27 03:21:01,463 - INFO - Model: VisionTransformer
+2025-07-27 03:21:01,463 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.2, attn_drop_rate=0.15, mixup=True, cutmix=True, label_smoothing=0.1
+2025-07-27 03:21:01,463 - INFO - Dataset: 21626 train, 1796 val (Fake: 9698, Real: 11928)
+2025-07-27 05:28:40,007 - INFO - Training completed
+2025-07-27 05:28:40,007 - INFO - Best Validation Accuracy: 50.89%
+2025-07-27 05:28:40,007 - INFO - Model: VisionTransformer
+2025-07-27 05:28:40,007 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.15, attn_drop_rate=0.1, mixup=True, cutmix=True, label_smoothing=0.05
+2025-07-27 05:28:40,007 - INFO - Dataset: 21626 train, 1796 val (Fake: 9698, Real: 11928)
+2025-07-27 16:34:59,526 - INFO - Training completed
+2025-07-27 16:34:59,526 - INFO - Best Validation Accuracy: 73.61%
+2025-07-27 16:34:59,526 - INFO - Model: VisionTransformer
+2025-07-27 16:34:59,526 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.15, attn_drop_rate=0.1, mixup=False, cutmix=False, label_smoothing=0.05
+2025-07-27 16:34:59,526 - INFO - Dataset: 21626 train, 1796 val (Fake: 9698, Real: 11928)
