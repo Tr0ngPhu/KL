@@ -1,4 +1,3 @@
-
 # --- IMPORTS (đặt ở đầu file theo chuẩn Python) ---
 import os
 import sys
@@ -153,12 +152,15 @@ def get_optimized_transforms():
     albumentations_aug = A.Compose([
         A.Resize(model_cfg['image_size'], model_cfg['image_size']),
         A.HorizontalFlip(p=aug_cfg.get('horizontal_flip', 0.5)),
+        A.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.1, hue=0.05, p=0.7),
         A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         ToTensorV2(),
     ])
     train_transform = transforms.Compose([
         AlbumentationsTransform(albumentations_aug),
         transforms.RandomErasing(p=aug_cfg.get('random_erasing', 0.1)),
+        RandomGaussianBlur(p=0.15, kernel_size=3),
+        RandomNoise(p=0.1, std=0.03),
     ])
     val_transform = transforms.Compose([
         transforms.Resize((model_cfg['image_size'], model_cfg['image_size'])),

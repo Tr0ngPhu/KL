@@ -222,19 +222,31 @@ async def predict(file: UploadFile = File(...)):
             confidence = probabilities.max().item()
             predicted_idx = probabilities.argmax().item()
             predicted_class = class_names[predicted_idx]
-        # Lấy attention map từ ViT
+        # Lấy attention map từ ViT và debug heatmap
+        import logging
         if hasattr(model, 'get_attention_maps'):
             attn_maps = model.get_attention_maps(img_tensor)
             attn = attn_maps[-1].mean(1)[0]
             patch_num = int((attn.shape[0]-1)**0.5)
             heatmap = attn[1:].reshape(patch_num, patch_num).cpu().numpy()
+            print(f"[DEBUG] Heatmap stats: min={heatmap.min():.4f}, max={heatmap.max():.4f}, mean={heatmap.mean():.4f}, std={heatmap.std():.4f}")
+            # Save raw heatmap for inspection
+            import matplotlib.pyplot as plt
+            raw_heatmap_path = os.path.join(uploads_dir, f'raw_heatmap_{timestamp}.png')
+            plt.imsave(raw_heatmap_path, heatmap, cmap='turbo')
+            print(f"[DEBUG] Raw heatmap saved: {raw_heatmap_path}")
         else:
             patch_num = config['model']['image_size'] // config['model']['patch_size']
             heatmap = np.ones((patch_num, patch_num)) * 0.5
-        # Tạo và lưu heatmap
+            print("[DEBUG] Fallback: uniform heatmap used.")
+        # Tạo và lưu heatmap overlay màu (OpenCV)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        from explainer import ExplainabilityAnalyzer
+        analyzer = ExplainabilityAnalyzer(model, class_names)
+        overlay = analyzer.get_colored_heatmap_overlay(np.array(image), heatmap, alpha=0.4)
         heatmap_path = os.path.join(uploads_dir, f'heatmap_{timestamp}.png')
-        generate_attention_heatmap(image, heatmap, save_path=heatmap_path)
+        import cv2
+        cv2.imwrite(heatmap_path, overlay)
         # Phân tích vùng focus
         heatmap_resized = cv2.resize(heatmap, (config['model']['image_size'], config['model']['image_size']), interpolation=cv2.INTER_CUBIC)
         focus_patch, (max_y, max_x) = get_focus_region(heatmap_resized, np.array(image), patch_size=config['model']['patch_size'])

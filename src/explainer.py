@@ -35,6 +35,18 @@ except ImportError as e:
 warnings.filterwarnings('ignore')
 
 class ExplainabilityAnalyzer:
+    def get_colored_heatmap_overlay(self, original_image: np.ndarray, heatmap: np.ndarray, alpha: float = 0.4) -> np.ndarray:
+        """Trả về ảnh overlay heatmap màu (OpenCV) cho web/API."""
+        import cv2
+        if heatmap.max() <= 1.0:
+            heatmap = (heatmap * 255).astype(np.uint8)
+        heatmap_color = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        if original_image.max() <= 1.0:
+            original = (original_image * 255).astype(np.uint8)
+        else:
+            original = original_image.copy()
+        overlay = cv2.addWeighted(original, 1 - alpha, heatmap_color, alpha, 0)
+        return overlay
     """
     🔥 ENHANCED Explainability Analyzer for Vision Transformers
     Features: Gradient-based attention, Multi-scale fusion, Advanced visualization
