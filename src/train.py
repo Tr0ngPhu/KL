@@ -90,7 +90,7 @@ import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from models.model import VisionTransformer
+from models.model import PretrainedVisionTransformer
 import yaml
 import warnings
 import numpy as np
@@ -289,21 +289,12 @@ def main():
     print(f"⚡ Batch size: {batch_size}, Num workers: 4")
 
     # Model ViT custom
-    model = VisionTransformer(
-        img_size=config['model']['image_size'],
-        patch_size=config['model']['patch_size'],
-        in_channels=3,
+    model = PretrainedVisionTransformer(
+        model_name='vit_base_patch16_224',
         num_classes=config['model']['num_classes'],
-        embed_dim=config['model']['embed_dim'],
-        depth=config['model']['depth'],
-        num_heads=config['model']['heads'],
-        mlp_ratio=config['model']['mlp_ratio'],
-        dropout=config['model']['dropout'],
-        drop_path_rate=config['model']['drop_path_rate'],
-        use_cls_token=True,
-        use_se=config['model'].get('use_se', False)
+        pretrained=True
     ).to(device)
-    print(f"🧠 Model: VisionTransformer ({sum(p.numel() for p in model.parameters()):,} params)")
+    print(f"🧠 Model: PretrainedVisionTransformer ({sum(p.numel() for p in model.parameters()):,} params)")
 
     # Training Components
     # Tính class weights cho CrossEntropyLoss
@@ -334,9 +325,8 @@ def main():
     val_accuracies = []
 
     print(f"\n{'='*15} STARTING TRAINING {'='*15}")
-    # Tạo thư mục results chỉ khi bắt đầu train thành công (epoch 0)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    results_dir = os.path.join(project_root, 'results', timestamp)
+    # Lưu kết quả cho mô hình pretrained vào D:\KL\src\results
+    results_dir = os.path.join(project_root, 'src', 'results')
     os.makedirs(results_dir, exist_ok=True)
     for epoch in range(config['training']['epochs']):
         # Training
@@ -376,7 +366,7 @@ def main():
             best_val_acc = val_acc
             epochs_no_improve = 0
             save_checkpoint(model, optimizer, epoch, val_acc, os.path.join(results_dir, 'best_model.pth'))
-            print(" ✨ New best model saved!")
+            print(f" ✨ New best model saved to {os.path.join(results_dir, 'best_model.pth')}")
         else:
             epochs_no_improve += 1
             print()
@@ -447,15 +437,22 @@ def main():
     print(f"  F1-Score: {last_report['weighted avg']['f1-score']:.2f}")
     print(f"\nResults saved in: {results_dir}")
 
-    # Ghi log kết quả training vào training.log (chỉ ghi khi kết thúc toàn bộ train hoặc early stop)
+    # Đảm bảo luôn ghi log kết quả training cho mô hình pretrained
     log_path = os.path.join(project_root, config['paths']['log_file'])
-    with open(log_path, 'a', encoding='utf-8') as log_file:
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
-        log_file.write(f"{now} - INFO - Training completed\n")
-        log_file.write(f"{now} - INFO - Best Validation Accuracy: {best_val_acc:.2%}\n")
-        log_file.write(f"{now} - INFO - Model: VisionTransformer\n")
-        log_file.write(f"{now} - INFO - Training parameters: batch_size={batch_size}, learning_rate={config['training']['learning_rate']}, epochs={config['training']['epochs']}, dropout={config['model']['dropout']}, attn_drop_rate={config['model']['drop_path_rate']}, mixup={config['training'].get('use_mixup', False)}, cutmix={config['training'].get('use_cutmix', False)}, label_smoothing={config['training'].get('label_smoothing', 0.0)}\n")
-        log_file.write(f"{now} - INFO - Dataset: {len(train_dataset)} train, {len(val_dataset)} val (Fake: {train_dataset.labels.count(0)}, Real: {train_dataset.labels.count(1)})\n")
+    log_dir = os.path.dirname(log_path)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    try:
+        with open(log_path, 'a', encoding='utf-8') as log_file:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+            log_file.write(f"{now} - INFO - Training completed\n")
+            log_file.write(f"{now} - INFO - Best Validation Accuracy: {best_val_acc:.2%}\n")
+            log_file.write(f"{now} - INFO - Model: PretrainedVisionTransformer\n")
+            log_file.write(f"{now} - INFO - Training parameters: batch_size={batch_size}, learning_rate={config['training']['learning_rate']}, epochs={config['training']['epochs']}, dropout={config['model']['dropout']}, attn_drop_rate={config['model']['drop_path_rate']}, mixup={config['training'].get('use_mixup', False)}, cutmix={config['training'].get('use_cutmix', False)}, label_smoothing={config['training'].get('label_smoothing', 0.0)}\n")
+            log_file.write(f"{now} - INFO - Dataset: {len(train_dataset)} train, {len(val_dataset)} val (Fake: {train_dataset.labels.count(0)}, Real: {train_dataset.labels.count(1)})\n")
+        print(f"✅ Training log saved to {log_path}")
+    except Exception as e:
+        print(f"❌ Could not save training log: {e}")
 
 if __name__ == '__main__':
     main()

@@ -538,17 +538,12 @@ function showResult(result, file) {
         const heatmapContainer = document.querySelector('.heatmap-container-inline');
         
         if (heatmapOverlay && heatmapContainer) {
-            // Set inline heatmap image source
+            // Set inline heatmap image source (KHÔNG can thiệp màu)
             heatmapOverlay.src = result.heatmap;
             heatmapOverlay.style.display = 'block';
-            
-            // Show the container with animation
             setTimeout(() => {
                 heatmapContainer.classList.add('show');
             }, 300);
-            
-            // Enhance the heatmap for better visualization
-            enhanceHeatmap(heatmapOverlay);
         }
         
         // Also display in the standalone section

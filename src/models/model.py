@@ -4,6 +4,7 @@ import torch.nn as nn
 
 import torch.nn.functional as F
 from .se_module import SEModule
+import timm
 
 # PatchEmbedding: Chia ảnh thành các patch và embedding
 class PatchEmbedding(nn.Module):
@@ -102,8 +103,23 @@ class EnhancedTransformerBlock(nn.Module):
 
 # VisionTransformer: ViT chuyên biệt cho fake/real
 
+# Wrapper cho ViT pretrained từ timm
+class PretrainedVisionTransformer(nn.Module):
+    def __init__(self, model_name='vit_base_patch16_224', num_classes=2, pretrained=True):
+        super().__init__()
+        self.model = timm.create_model(model_name, pretrained=pretrained, num_classes=num_classes)
+    def forward(self, x):
+        return self.model(x)
 
 class VisionTransformer(nn.Module):
+    def get_attention_maps(self, x):
+        """
+        Returns a list of attention maps for each layer, compatible with API usage.
+        The last map can be used for visualization as in the API.
+        """
+        with torch.no_grad():
+            attention_maps, _ = self.get_advanced_attention_maps(x)
+            return attention_maps
     """ViT với head đơn giản, hỗ trợ multi-scale fusion (tùy chọn)"""
     def __init__(self, img_size, patch_size, in_channels, num_classes,
                  embed_dim, depth, num_heads, mlp_ratio,

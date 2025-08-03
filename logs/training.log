@@ -111,3 +111,13 @@
 2025-07-28 00:35:35,209 - INFO - Model: VisionTransformer
 2025-07-28 00:35:35,209 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.15, attn_drop_rate=0.1, mixup=False, cutmix=False, label_smoothing=0.05
 2025-07-28 00:35:35,209 - INFO - Dataset: 21802 train, 1796 val (Fake: 9769, Real: 12033)
+2025-07-30 16:23:17,642 - INFO - Training completed
+2025-07-30 16:23:17,642 - INFO - Best Validation Accuracy: 82.02%
+2025-07-30 16:23:17,642 - INFO - Model: VisionTransformer
+2025-07-30 16:23:17,642 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.15, attn_drop_rate=0.1, mixup=False, cutmix=False, label_smoothing=0.05
+2025-07-30 16:23:17,642 - INFO - Dataset: 21802 train, 1796 val (Fake: 9769, Real: 12033)
+2025-07-31 04:53:20,475 - INFO - Training completed
+2025-07-31 04:53:20,475 - INFO - Best Validation Accuracy: 79.23%
+2025-07-31 04:53:20,475 - INFO - Model: PretrainedVisionTransformer
+2025-07-31 04:53:20,475 - INFO - Training parameters: batch_size=24, learning_rate=0.0002, epochs=50, dropout=0.15, attn_drop_rate=0.1, mixup=False, cutmix=False, label_smoothing=0.05
+2025-07-31 04:53:20,475 - INFO - Dataset: 21802 train, 1796 val (Fake: 9769, Real: 12033)

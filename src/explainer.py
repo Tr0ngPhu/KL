@@ -36,15 +36,25 @@ warnings.filterwarnings('ignore')
 
 class ExplainabilityAnalyzer:
     def get_colored_heatmap_overlay(self, original_image: np.ndarray, heatmap: np.ndarray, alpha: float = 0.4) -> np.ndarray:
-        """Trả về ảnh overlay heatmap màu (OpenCV) cho web/API."""
+        """Trả về ảnh overlay heatmap màu (OpenCV) cho web/API. Đảm bảo luôn là ảnh màu."""
         import cv2
-        if heatmap.max() <= 1.0:
-            heatmap = (heatmap * 255).astype(np.uint8)
-        heatmap_color = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-        if original_image.max() <= 1.0:
-            original = (original_image * 255).astype(np.uint8)
+        # Normalize heatmap to [0, 1]
+        hmin, hmax = np.min(heatmap), np.max(heatmap)
+        if hmax - hmin > 1e-6:
+            norm_heatmap = (heatmap - hmin) / (hmax - hmin)
+        else:
+            norm_heatmap = np.zeros_like(heatmap)
+        heatmap_uint8 = (norm_heatmap * 255).astype(np.uint8)
+        heatmap_color = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+        # Ensure original image is 3-channel
+        if original_image.ndim == 2:
+            original = cv2.cvtColor(original_image, cv2.COLOR_GRAY2BGR)
+        elif original_image.shape[2] == 1:
+            original = cv2.cvtColor(original_image, cv2.COLOR_GRAY2BGR)
         else:
             original = original_image.copy()
+        if original.max() <= 1.0:
+            original = (original * 255).astype(np.uint8)
         overlay = cv2.addWeighted(original, 1 - alpha, heatmap_color, alpha, 0)
         return overlay
     """
